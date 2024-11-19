@@ -1,30 +1,44 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Trash2 } from 'lucide-react';
+import React, { useEffect } from 'react';
 import { useCartStore } from '../store/useCartStore';
+import { useUserStore } from '../store/useUserStore';
 
 export function CartPage() {
-  const { items, removeItem, total } = useCartStore();
+  const { cart, isLoading, error, fetchCart, clearCart } = useCartStore();
+  const { currentUser } = useUserStore();
 
-  if (items.length === 0) {
+  useEffect(() => {
+    if (currentUser?.id) {
+      // Assuming the cart ID is the same as the user ID for simplicity
+      fetchCart(currentUser.id);
+    }
+  }, [currentUser, fetchCart]);
+
+  const handleClearCart = async () => {
+    if (cart?.id) {
+      await clearCart(cart.id);
+    }
+  };
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Your cart is empty
-            </h2>
-            <p className="text-gray-600 mb-8">
-              Looks like you haven't added any courses yet.
-            </p>
-            <Link
-              to="/"
-              className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-            >
-              Browse Courses
-            </Link>
-          </div>
-        </div>
+      <div className="min-h-screen pt-16 flex items-center justify-center">
+        <p className="text-gray-600">Loading cart...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen pt-16 flex items-center justify-center">
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
+
+  if (!cart || cart.items.length === 0) {
+    return (
+      <div className="min-h-screen pt-16 flex items-center justify-center">
+        <p className="text-gray-600">Your cart is empty</p>
       </div>
     );
   }
@@ -32,48 +46,34 @@ export function CartPage() {
   return (
     <div className="min-h-screen bg-gray-50 pt-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">Shopping Cart</h1>
-        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Shopping Cart</h2>
+                <button
+                  onClick={handleClearCart}
+                  className="text-sm text-red-600 hover:text-red-500"
+                >
+                  Clear Cart
+                </button>
+              </div>
+              
               <ul className="divide-y divide-gray-200">
-                {items.map((item) => (
-                  <li key={item.course.id} className="p-6">
+                {cart.items.map((item) => (
+                  <li key={item.id} className="py-6">
                     <div className="flex items-center">
-                      <img
-                        src={item.course.thumbnail}
-                        alt={item.course.title}
-                        className="h-20 w-32 object-cover rounded"
-                      />
-                      <div className="ml-6 flex-1">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="text-lg font-medium text-gray-900">
-                              {item.course.title}
-                            </h3>
-                            <p className="text-sm text-gray-500">
-                              by {item.course.instructor}
-                            </p>
-                          </div>
-                          <p className="text-lg font-medium text-gray-900">
-                            ${item.course.price}
-                          </p>
-                        </div>
-                        <div className="mt-2 flex items-center justify-between">
-                          <div className="flex items-center text-sm text-gray-500">
-                            <span>{item.course.duration}</span>
-                            <span className="mx-2">•</span>
-                            <span>{item.course.level}</span>
-                          </div>
-                          <button
-                            onClick={() => removeItem(item.course.id)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </button>
-                        </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-medium text-gray-900">
+                          {/* Add course title or item name here */}
+                        </h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                          Quantity: {item.quantity}
+                        </p>
                       </div>
+                      <p className="text-lg font-medium text-gray-900">
+                        ${item.unitPrice}
+                      </p>
                     </div>
                   </li>
                 ))}
@@ -90,18 +90,16 @@ export function CartPage() {
                 <dl className="-my-4 text-sm divide-y divide-gray-200">
                   <div className="py-4 flex items-center justify-between">
                     <dt className="text-gray-600">Subtotal</dt>
-                    <dd className="font-medium text-gray-900">${total}</dd>
-                  </div>
-                  <div className="py-4 flex items-center justify-between">
-                    <dt className="text-gray-600">Tax</dt>
-                    <dd className="font-medium text-gray-900">$0.00</dd>
+                    <dd className="font-medium text-gray-900">
+                      ${cart.totalAmount}
+                    </dd>
                   </div>
                   <div className="py-4 flex items-center justify-between">
                     <dt className="text-base font-medium text-gray-900">
-                      Order total
+                      Total
                     </dt>
                     <dd className="text-base font-medium text-gray-900">
-                      ${total}
+                      ${cart.totalAmount}
                     </dd>
                   </div>
                 </dl>

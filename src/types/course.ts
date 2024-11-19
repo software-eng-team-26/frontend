@@ -5,8 +5,8 @@ export interface Course {
   price: number;
   instructor: string;
   duration: string;
-  category: 'programming' | 'marketing' | 'design';
-  level: 'beginner' | 'intermediate' | 'advanced';
+  category: string;
+  level: string;
   thumbnail: string;
   featured: boolean;
   isNew: boolean;

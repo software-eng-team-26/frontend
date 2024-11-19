@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Search, GraduationCap } from 'lucide-react';
+import { GraduationCap, Search, ShoppingCart } from 'lucide-react';
 import { useCartStore } from '../store/useCartStore';
+import { useUserStore } from '../store/useUserStore';
 
 export function Navbar() {
-  const cartItems = useCartStore((state) => state.items);
+  const { cart } = useCartStore();
+  const { currentUser } = useUserStore();
 
   return (
     <nav className="bg-white shadow-sm fixed w-full z-50">
@@ -46,23 +48,38 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Link
-              to="/cart"
-              className="relative p-2 text-gray-600 hover:text-gray-900"
+            <Link 
+              to="/cart" 
+              className="relative flex items-center text-gray-600 hover:text-gray-900"
             >
               <ShoppingCart className="h-6 w-6" />
-              {cartItems.length > 0 && (
-                <span className="absolute top-0 right-0 -mt-1 -mr-1 px-2 py-1 text-xs font-bold text-white bg-indigo-600 rounded-full">
-                  {cartItems.length}
+              {cart.items.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-indigo-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {cart.items.length}
                 </span>
               )}
             </Link>
-            <Link
-              to="/signin"
-              className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Sign In
-            </Link>
+
+            {currentUser ? (
+              <span className="text-gray-600">
+                {currentUser.email}
+              </span>
+            ) : (
+              <>
+                <Link
+                  to="/signin"
+                  className="text-gray-600 hover:text-gray-900 font-medium"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  to="/signup"
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
