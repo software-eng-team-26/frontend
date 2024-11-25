@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Cart, CartItem, cartApi } from '../services/cartApi';
 import { Course } from '../types/course';
+import { toast } from 'react-hot-toast';
 
 interface CartStore {
   cart: Cart;
@@ -11,6 +12,7 @@ interface CartStore {
   fetchTotalAmount: (cartId: number) => Promise<void>;
   addItem: (course: Course) => void;
   clearError: () => void;
+  removeItem: (itemId: string) => void;
 }
 
 const initialCart: Cart = {
@@ -32,6 +34,7 @@ export const useCartStore = create<CartStore>((set) => ({
       );
 
       if (existingItem) {
+        toast.error('Item already in cart');
         return state;
       }
 
@@ -39,14 +42,33 @@ export const useCartStore = create<CartStore>((set) => ({
         id: course.id,
         quantity: 1,
         unitPrice: course.price,
+        title: course.title,
+        thumbnail: course.thumbnail
       };
 
+      toast.success('Added to cart!');
       return {
         ...state,
         cart: {
           ...state.cart,
           items: [...state.cart.items, newItem],
           totalAmount: state.cart.totalAmount + course.price
+        }
+      };
+    }),
+
+  removeItem: (itemId) => 
+    set((state) => {
+      const itemToRemove = state.cart.items.find(item => item.id === itemId);
+      if (!itemToRemove) return state;
+
+      toast.success('Item removed from cart');
+      return {
+        ...state,
+        cart: {
+          ...state.cart,
+          items: state.cart.items.filter(item => item.id !== itemId),
+          totalAmount: state.cart.totalAmount - itemToRemove.unitPrice
         }
       };
     }),
@@ -75,11 +97,13 @@ export const useCartStore = create<CartStore>((set) => ({
         cart: initialCart,
         isLoading: false 
       });
+      toast.success('Cart cleared successfully');
     } catch (error) {
       set({ 
         error: error instanceof Error ? error.message : 'An error occurred', 
         isLoading: false 
       });
+      toast.error('Failed to clear cart');
     }
   },
 

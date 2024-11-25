@@ -1,4 +1,3 @@
-import React from 'react';
 import { Code2, Palette, TrendingUp } from 'lucide-react';
 import { cn } from '../lib/utils';
 

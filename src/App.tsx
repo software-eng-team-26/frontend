@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { HomePage } from './pages/HomePage';
@@ -11,12 +10,14 @@ import { CoursesPage } from './pages/CoursesPage';
 import { ProgrammingPage } from './pages/ProgrammingPage';
 import { DesignPage } from './pages/DesignPage';
 import { MarketingPage } from './pages/MarketingPage';
+import { Toaster } from 'react-hot-toast';
 
 
 function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
+        <Toaster position="top-right" />
         <Navbar />
         <Routes>
           <Route path="/" element={<HomePage />} />

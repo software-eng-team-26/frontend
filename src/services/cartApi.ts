@@ -4,7 +4,8 @@ export interface CartItem {
   id: string;
   quantity: number;
   unitPrice: number;
-  // Add other cart item fields as needed
+  title: string;
+  thumbnail: string;
 }
 
 export interface Cart {

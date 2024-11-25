@@ -1,9 +1,12 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useCartStore } from '../store/useCartStore';
 import { useUserStore } from '../store/useUserStore';
+import { toast } from 'react-hot-toast';
+import { Trash2, X } from 'lucide-react';
+import { Course } from '../types/course';
 
 export function CartPage() {
-  const { cart, isLoading, error, fetchCart, clearCart } = useCartStore();
+  const { cart, isLoading, error, fetchCart, clearCart, removeItem } = useCartStore();
   const { currentUser } = useUserStore();
 
   useEffect(() => {
@@ -50,61 +53,54 @@ export function CartPage() {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Shopping Cart</h2>
+                <h2 className="text-xl font-semibold">Shopping Cart</h2>
                 <button
                   onClick={handleClearCart}
-                  className="text-sm text-red-600 hover:text-red-500"
+                  className="flex items-center text-red-600 hover:text-red-700"
                 >
+                  <Trash2 className="h-5 w-5 mr-1" />
                   Clear Cart
                 </button>
               </div>
               
-              <ul className="divide-y divide-gray-200">
-                {cart.items.map((item) => (
-                  <li key={item.id} className="py-6">
-                    <div className="flex items-center">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-medium text-gray-900">
-                          {/* Add course title or item name here */}
-                        </h3>
-                        <p className="mt-1 text-sm text-gray-500">
-                          Quantity: {item.quantity}
-                        </p>
-                      </div>
-                      <p className="text-lg font-medium text-gray-900">
-                        ${item.unitPrice}
-                      </p>
+              {cart.items.map((item) => (
+                <div 
+                  key={item.id}
+                  className="flex items-center justify-between py-4 border-b last:border-0"
+                >
+                  <div className="flex items-center space-x-4">
+                    {item.thumbnail && (
+                      <img
+                        src={item.thumbnail}
+                        alt={item.title || 'Course thumbnail'}
+                        className="w-16 h-16 object-cover rounded"
+                      />
+                    )}
+                    <div>
+                      <h3 className="font-medium">{item.title || 'Course'}</h3>
+                      <p className="text-gray-600">${item.unitPrice}</p>
                     </div>
-                  </li>
-                ))}
-              </ul>
+                  </div>
+                  
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    className="p-2 text-gray-400 hover:text-red-600 rounded-full hover:bg-gray-100"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
 
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-24">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
-                Order Summary
-              </h2>
-              <div className="flow-root">
-                <dl className="-my-4 text-sm divide-y divide-gray-200">
-                  <div className="py-4 flex items-center justify-between">
-                    <dt className="text-gray-600">Subtotal</dt>
-                    <dd className="font-medium text-gray-900">
-                      ${cart.totalAmount}
-                    </dd>
-                  </div>
-                  <div className="py-4 flex items-center justify-between">
-                    <dt className="text-base font-medium text-gray-900">
-                      Total
-                    </dt>
-                    <dd className="text-base font-medium text-gray-900">
-                      ${cart.totalAmount}
-                    </dd>
-                  </div>
-                </dl>
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-xl font-semibold mb-4">Cart Summary</h2>
+              <div className="flex justify-between py-2 border-b">
+                <span>Subtotal</span>
+                <span>${cart.totalAmount}</span>
               </div>
-              <button className="mt-6 w-full bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+              <button className="w-full mt-6 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700">
                 Proceed to Checkout
               </button>
             </div>
