@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link , useLocation } from 'react-router-dom';
 import { GraduationCap, Search, ShoppingCart } from 'lucide-react';
 import { useCartStore } from '../store/useCartStore';
 import { useUserStore } from '../store/useUserStore';
@@ -7,6 +7,22 @@ import { useUserStore } from '../store/useUserStore';
 export function Navbar() {
   const { cart } = useCartStore();
   const { currentUser } = useUserStore();
+  const location = useLocation();
+  let timeoutId: NodeJS.Timeout;
+  const isActive = (path: string) => location.pathname.startsWith(path);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  
+  
+  const handleMouseEnter = () => {
+    clearTimeout(timeoutId);
+    setDropdownOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutId = setTimeout(() => {
+      setDropdownOpen(false);
+    }, 200);
+  };
 
   return (
     <nav className="bg-white shadow-sm fixed w-full z-50">
@@ -20,13 +36,63 @@ export function Navbar() {
             
             {/* Navigation Links */}
             <div className="hidden md:flex items-center space-x-8">
-              <Link to="/courses" className="text-gray-600 hover:text-gray-900 font-medium">
-                Courses
-              </Link>
-              <Link to="/categories" className="text-gray-600 hover:text-gray-900 font-medium">
-                Categories
-              </Link>
-              <Link to="/featured" className="text-gray-600 hover:text-gray-900 font-medium">
+      <Link
+        to="/courses"
+        className={`text-gray-600 hover:text-gray-900 font-medium ${
+          isActive("/courses") ? "text-indigo-600 font-bold" : ""
+        }`}
+      >
+        Courses
+      </Link>
+      {/* Categories Dropdown */}
+      <div
+                className="relative"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                
+                
+                >
+                
+              
+                <span
+                  className={`text-gray-600 hover:text-gray-900 font-medium cursor-pointer ${
+                    isActive("/categories") ? "text-indigo-600 font-bold" : ""
+                  }`}
+                  
+                >
+                  Categories
+                </span>
+
+                {dropdownOpen && (
+                  <div className="absolute left-0 mt-2 w-40 bg-white shadow-lg rounded-md z-50">
+                 
+                    <Link
+                      to="/categories/programming"
+                      className="block px-4 py-2 text-gray-600 hover:bg-gray-100"
+                    >
+                      Programming
+                    </Link>
+                    <Link
+                      to="/categories/design"
+                      className="block px-4 py-2 text-gray-600 hover:bg-gray-100"
+                    >
+                      Design
+                    </Link>
+                    <Link
+                      to="/categories/marketing"
+                      className="block px-4 py-2 text-gray-600 hover:bg-gray-100"
+                    >
+                      Marketing
+                    </Link>
+                  </div>
+                )}
+              </div>
+      <Link
+        to="/featured"
+        className={`text-gray-600 hover:text-gray-900 font-medium ${
+          isActive("/featured") ? "text-indigo-600 font-bold" : ""
+        }`}
+      >
                 Featured
               </Link>
             </div>
