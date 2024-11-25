@@ -1,12 +1,14 @@
 import { useEffect } from 'react';
 import { useCartStore } from '../store/useCartStore';
 import { useUserStore } from '../store/useUserStore';
+import { useOrderStore } from '../store/useOrderStore';
 import { toast } from 'react-hot-toast';
 import { Trash2, X } from 'lucide-react';
 import { Course } from '../types/course';
 
 export function CartPage() {
   const { cart, isLoading, error, fetchCart, clearCart, removeItem } = useCartStore();
+  const { createOrder } = useOrderStore();
   const { currentUser } = useUserStore();
 
   useEffect(() => {
@@ -19,6 +21,17 @@ export function CartPage() {
   const handleClearCart = async () => {
     if (cart?.id) {
       await clearCart(cart.id);
+    }
+  };
+
+  const handleCheckout = async () => {
+    if (!cart?.id) return;
+    
+    try {
+      await createOrder(cart.id);
+      await clearCart(cart.id);
+    } catch (error) {
+      console.error('Checkout failed:', error);
     }
   };
 
@@ -100,7 +113,10 @@ export function CartPage() {
                 <span>Subtotal</span>
                 <span>${cart.totalAmount}</span>
               </div>
-              <button className="w-full mt-6 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700">
+              <button 
+                onClick={handleCheckout}
+                className="w-full mt-6 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700"
+              >
                 Proceed to Checkout
               </button>
             </div>

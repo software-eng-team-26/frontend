@@ -11,6 +11,7 @@ import { ProgrammingPage } from './pages/ProgrammingPage';
 import { DesignPage } from './pages/DesignPage';
 import { MarketingPage } from './pages/MarketingPage';
 import { Toaster } from 'react-hot-toast';
+import { OrdersPage } from './pages/OrdersPage';
 
 
 function App() {
@@ -30,7 +31,7 @@ function App() {
           <Route path="/categories/programming" element={<ProgrammingPage />} />
           <Route path="/categories/design" element={<DesignPage />} />
           <Route path="/categories/marketing" element={<MarketingPage />} />
-
+          <Route path="/orders" element={<OrdersPage />} />
         </Routes>
       </div>
     </Router>

@@ -10,4 +10,5 @@ export interface Course {
   thumbnail: string;
   featured: boolean;
   isNew: boolean;
+  stockQuantity: number;
 }
