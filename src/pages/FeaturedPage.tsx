@@ -1,16 +1,35 @@
-import React from "react";
-import { courses } from "../data/courses";
+import React, { useState } from "react";
+import { courses as allCourses } from "../data/courses";
 import { CourseCard } from "../components/CourseCard";
+import SortingComponent from "../components/SortingComponent";
 
 export const FeaturedPage = () => {
-  const featuredCourses = courses.filter((course) => course.featured);
+  const [coursesState, setCoursesState] = useState(
+    allCourses.filter((course) => course.featured)
+  );
+  const [selectedSort, setSelectedSort] = useState("Sort by");
+
 
   return (
     <div className="featured-page pt-24 px-4">
       <h1 className="text-2xl font-bold text-center mb-8">Featured Courses</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6 px-4">
-        {featuredCourses.length > 0 ? (
-          featuredCourses.map((course) => (
+  
+      {/* Sorting Component */}
+      <SortingComponent
+        selectedSort={selectedSort}
+        onSortChange={(sortOption) => {
+          setSelectedSort(sortOption); // Seçilen sıralama seçeneğini güncelle
+          const sortedCourses = [...coursesState].sort((a, b) =>
+            sortOption === "lowToHigh" ? a.price - b.price : b.price - a.price
+          );
+          setCoursesState(sortedCourses); // Kursları sıralayıp güncelle
+        }}
+      />
+  
+      {/* Kursların listesi */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+        {coursesState.length > 0 ? (
+          coursesState.map((course) => (
             <CourseCard
               key={course.id}
               course={course}
@@ -23,4 +42,4 @@ export const FeaturedPage = () => {
       </div>
     </div>
   );
-};
+}
