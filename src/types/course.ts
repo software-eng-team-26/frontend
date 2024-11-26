@@ -1,5 +1,5 @@
 export interface Course {
-  id: string;
+  id: number;
   title: string;
   description: string;
   price: number;
@@ -10,5 +10,4 @@ export interface Course {
   thumbnail: string;
   featured: boolean;
   isNew: boolean;
-  stockQuantity: number;
 }
