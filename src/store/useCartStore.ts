@@ -12,7 +12,7 @@ interface CartStore {
   fetchTotalAmount: (cartId: number) => Promise<void>;
   addItem: (course: Course) => void;
   clearError: () => void;
-  removeItem: (itemId: string) => void;
+  removeItem: (itemId: number) => void;
 }
 
 const initialCart: Cart = {
@@ -27,7 +27,7 @@ export const useCartStore = create<CartStore>((set) => ({
   isLoading: false,
   error: null,
 
-  addItem: (course) => 
+  addItem: (course: Course) => 
     set((state) => {
       const existingItem = state.cart.items.find(
         item => item.id === course.id
@@ -57,7 +57,7 @@ export const useCartStore = create<CartStore>((set) => ({
       };
     }),
 
-  removeItem: (itemId) => 
+  removeItem: (itemId: number) => 
     set((state) => {
       const itemToRemove = state.cart.items.find(item => item.id === itemId);
       if (!itemToRemove) return state;

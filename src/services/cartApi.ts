@@ -1,7 +1,7 @@
 import { ApiResponse } from './api';
 
 export interface CartItem {
-  id: string;
+  id: number;
   quantity: number;
   unitPrice: number;
   title: string;
