@@ -1,130 +1,155 @@
 import { create } from 'zustand';
-import { Cart, CartItem, cartApi } from '../services/cartApi';
-import { Course } from '../types/course';
+import { persist } from 'zustand/middleware';
+import { ProductDto } from '../services/productApi';
+import { cartApi } from '../services/cartApi';
 import { toast } from 'react-hot-toast';
+import { useAuthStore } from './useAuthStore';
+import axios from 'axios';
 
-interface CartStore {
-  cart: Cart;
+interface CartState {
+  cart: {
+    id: number | null;
+    items: Array<{
+      id: number;
+      product: ProductDto;
+      quantity: number;
+      totalPrice: number;
+    }>;
+    totalAmount: number;
+  };
   isLoading: boolean;
   error: string | null;
-  fetchCart: (cartId: number) => Promise<void>;
-  clearCart: (cartId: number) => Promise<void>;
-  fetchTotalAmount: (cartId: number) => Promise<void>;
-  addItem: (course: Course) => void;
-  clearError: () => void;
-  removeItem: (itemId: number) => void;
+  loadCart: () => Promise<void>;
+  addItem: (product: ProductDto) => Promise<void>;
+  removeItem: (productId: number) => Promise<void>;
+  clearCart: () => Promise<void>;
 }
 
-const initialCart: Cart = {
-  id: 0,
-  totalAmount: 0,
-  items: [],
-  userId: 0,
-};
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
+      cart: {
+        id: null,
+        items: [],
+        totalAmount: 0
+      },
+      isLoading: false,
+      error: null,
 
-export const useCartStore = create<CartStore>((set) => ({
-  cart: initialCart,
-  isLoading: false,
-  error: null,
-
-  addItem: (course: Course) => 
-    set((state) => {
-      const existingItem = state.cart.items.find(
-        item => item.id === course.id
-      );
-
-      if (existingItem) {
-        toast.error('Item already in cart');
-        return state;
-      }
-
-      const newItem: CartItem = {
-        id: course.id,
-        quantity: 1,
-        unitPrice: course.price,
-        title: course.title,
-        thumbnail: course.thumbnail
-      };
-
-      toast.success('Added to cart!');
-      return {
-        ...state,
-        cart: {
-          ...state.cart,
-          items: [...state.cart.items, newItem],
-          totalAmount: state.cart.totalAmount + course.price
+      loadCart: async () => {
+        if (get().isLoading) return;
+        
+        set({ isLoading: true, error: null });
+        try {
+          const response = await cartApi.getCurrentCart();
+          console.log('Load cart response:', response);
+          
+          if (response.data?.data) {
+            const cart = response.data.data;
+            
+            // Ensure cart has required properties
+            const validCart = {
+              id: cart.id || null,
+              items: Array.isArray(cart.items) ? cart.items : [],
+              totalAmount: cart.totalAmount || 0
+            };
+            
+            set({ 
+              cart: validCart,
+              isLoading: false,
+              error: null
+            });
+          } else {
+            console.error('Invalid cart data:', response.data);
+            set({ 
+              cart: { id: null, items: [], totalAmount: 0 },
+              isLoading: false,
+              error: null
+            });
+          }
+        } catch (error) {
+          console.error('Error loading cart:', error);
+          set({ 
+            error: 'Failed to load cart',
+            isLoading: false
+          });
+          throw error;
         }
-      };
-    }),
+      },
 
-  removeItem: (itemId: number) => 
-    set((state) => {
-      const itemToRemove = state.cart.items.find(item => item.id === itemId);
-      if (!itemToRemove) return state;
-
-      toast.success('Item removed from cart');
-      return {
-        ...state,
-        cart: {
-          ...state.cart,
-          items: state.cart.items.filter(item => item.id !== itemId),
-          totalAmount: state.cart.totalAmount - itemToRemove.unitPrice
+      addItem: async (product) => {
+        try {
+          const response = await cartApi.addItemToCart(product.id);
+          console.log('Add item response:', response.data);
+          
+          if (response.data?.data) {
+            const cart = response.data.data;
+            set({ 
+              cart: {
+                id: cart.id,
+                items: cart.items || [],
+                totalAmount: cart.totalAmount || 0
+              }
+            });
+            toast.success('Item added to cart');
+          }
+        } catch (error) {
+          console.error('Error adding item:', error);
+          toast.error('Failed to add item to cart');
+          throw error;
         }
-      };
+      },
+
+      removeItem: async (productId: number) => {
+        try {
+          const token = useAuthStore.getState().token;
+          if (!token) {
+            toast.error('Please sign in to manage your cart');
+            return;
+          }
+
+          const currentCart = get().cart;
+          if (!currentCart.id) {
+            toast.error('No active cart found');
+            return;
+          }
+
+          await cartApi.removeItemFromCart(currentCart.id, productId);
+          const response = await cartApi.getCurrentCart();
+          
+          if (response.data?.data) {
+            set({ cart: response.data.data });
+            toast.success('Item removed from cart');
+          }
+        } catch (error) {
+          console.error('Error removing item:', error);
+          if (axios.isAxiosError(error)) {
+            if (error.response?.status === 403) {
+              toast.error('Please sign in to manage your cart');
+              useAuthStore.getState().clearToken();
+            } else if (error.response?.status === 404) {
+              toast.error('Cart or item not found');
+            } else {
+              toast.error('Failed to remove item from cart');
+            }
+          }
+          throw error;
+        }
+      },
+
+      clearCart: async () => {
+        try {
+          await cartApi.clearCart();
+          set({ cart: { id: null, items: [], totalAmount: 0 } });
+        } catch (error) {
+          console.error('Error clearing cart:', error);
+          throw error;
+        }
+      },
     }),
-
-  fetchCart: async (cartId) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await cartApi.getCart(cartId);
-      set({ 
-        cart: response.data ?? initialCart,
-        isLoading: false 
-      });
-    } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'An error occurred', 
-        isLoading: false 
-      });
+    {
+      name: 'cart-storage',
+      partialize: (state) => ({ cart: state.cart }),
     }
-  },
-
-  clearCart: async (cartId) => {
-    set({ isLoading: true, error: null });
-    try {
-      await cartApi.clearCart(cartId);
-      set({ 
-        cart: initialCart,
-        isLoading: false 
-      });
-      toast.success('Cart cleared successfully');
-    } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'An error occurred', 
-        isLoading: false 
-      });
-      toast.error('Failed to clear cart');
-    }
-  },
-
-  fetchTotalAmount: async (cartId) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await cartApi.getTotalAmount(cartId);
-      set((state) => ({
-        cart: {
-          ...state.cart,
-          totalAmount: response.data ?? 0,
-        },
-        isLoading: false,
-      }));
-    } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'An error occurred', 
-        isLoading: false 
-      });
-    }
-  },
-
-  clearError: () => set({ error: null }),
-}));
+  )
+);

@@ -1,46 +1,56 @@
-import { ApiResponse } from './api';
+import { api } from './api';
+import { ProductDto } from './productApi';
 
 export interface CartItem {
   id: number;
+  product: ProductDto;
   quantity: number;
-  unitPrice: number;
-  title: string;
-  thumbnail: string;
+  totalPrice: number;
 }
 
 export interface Cart {
-  id: number;
-  totalAmount: number;
+  id: number | null;
   items: CartItem[];
-  userId: number;
+  totalAmount: number;
+  user?: {
+    id: number;
+    email: string;
+  };
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9191/api/v1';
+export interface ApiResponse<T> {
+  message: string;
+  data: T;
+}
 
 export const cartApi = {
-  async getCart(cartId: number): Promise<ApiResponse<Cart>> {
-    const response = await fetch(`${API_BASE_URL}/carts/${cartId}/my-cart`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+  async getCurrentCart() {
+    try {
+      const response = await api.get<ApiResponse<Cart>>('/carts/my-cart');
+      console.log('Cart API response:', response.data);
+      return response;
+    } catch (error) {
+      console.error('Cart API error:', error);
+      throw error;
     }
-    return response.json();
   },
 
-  async clearCart(cartId: number): Promise<ApiResponse<null>> {
-    const response = await fetch(`${API_BASE_URL}/carts/${cartId}/clear`, {
-      method: 'DELETE',
+  async addItemToCart(productId: number, quantity: number = 1) {
+    const response = await api.post<ApiResponse<Cart>>('/carts/add-item', null, {
+      params: { productId, quantity }
     });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
+    return response;
   },
 
-  async getTotalAmount(cartId: number): Promise<ApiResponse<number>> {
-    const response = await fetch(`${API_BASE_URL}/carts/${cartId}/cart/total-price`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+  async removeItemFromCart(cartId: number, productId: number) {
+    if (!cartId) {
+      throw new Error('Cart ID is required');
     }
-    return response.json();
+    return api.delete(`/carts/${cartId}/items/${productId}`);
   },
+
+  async clearCart() {
+    const response = await api.delete<ApiResponse<null>>('/carts/clear');
+    return response;
+  }
 }; 

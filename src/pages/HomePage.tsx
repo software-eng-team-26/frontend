@@ -4,33 +4,56 @@ import { CategoryNav } from '../components/CategoryNav';
 import { CourseCard } from '../components/CourseCard';
 import { productApi, ProductDto } from '../services/productApi';
 import { toast } from 'react-hot-toast';
+import { useUserStore } from '../store/useUserStore';
+import { useAuthStore } from '../store/useAuthStore';
 
 export function HomePage() {
+  console.log('HomePage component rendering');
   const [courses, setCourses] = useState<ProductDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { currentUser } = useUserStore();
+  const { token } = useAuthStore();
 
   useEffect(() => {
+    console.log('HomePage useEffect running');
     fetchCourses();
   }, []);
 
   const fetchCourses = async () => {
     try {
       setIsLoading(true);
+      console.log('Fetching courses...');
       const response = await productApi.getAllProducts();
+      console.log('Courses response:', response);
       if (response.data) {
         setCourses(response.data);
       }
     } catch (error) {
-      toast.error('Failed to fetch courses');
       console.error('Error fetching courses:', error);
+      toast.error('Failed to fetch courses');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-16">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20">
+        {/* User Info Section */}
+        {currentUser && (
+          <div className="mb-8 p-4 bg-white rounded-lg shadow">
+            <h2 className="text-xl font-semibold mb-2">Welcome, {currentUser.firstName}!</h2>
+            <div className="text-sm text-gray-600">
+              <p>Email: {currentUser.email}</p>
+              {token && (
+                <p className="mt-1">
+                  Session Active: <span className="text-green-600">✓</span>
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Hero Section */}
         <div className="text-center py-16 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl mb-12">
           <h1 className="text-4xl font-bold text-white mb-4">
@@ -63,7 +86,7 @@ export function HomePage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.length > 0 ? (
+              {Array.isArray(courses) && courses.length > 0 ? (
                 courses.map((course) => (
                   <CourseCard key={course.id} course={course} />
                 ))

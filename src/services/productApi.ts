@@ -1,34 +1,23 @@
-import { ApiResponse } from './api';
+import { api } from './api';
 
 export interface ProductDto {
   id: number;
   name: string;
-  brand: string;
-  price: number;
-  inventory: number;
   description: string;
-  level: number;
-  duration: number;
-  moduleCount: number;
-  certification: boolean;
-  instructorName: string;
-  instructorRole: string;
-  thumbnailUrl: string;
-  curriculum: string[];
-  category: {
+  price: number;
+  imageUrl?: string;
+  category?: {
     id: number;
     name: string;
   };
-  images: {
-    id: number;
-    downloadUrl: string;
-    fileName: string;
-    fileType: string;
-  }[];
-  featured: boolean;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9191/api/v1';
+
+export interface ApiResponse<T> {
+  message: string;
+  data: T | null;
+}
 
 export const productApi = {
   async getAllProducts(): Promise<ApiResponse<ProductDto[]>> {

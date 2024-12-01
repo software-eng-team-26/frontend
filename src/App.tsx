@@ -12,12 +12,45 @@ import { DesignPage } from './pages/DesignPage';
 import { MarketingPage } from './pages/MarketingPage';
 import { Toaster } from 'react-hot-toast';
 import { OrdersPage } from './pages/OrdersPage';
+import { AuthDebug } from './components/AuthDebug';
+import { TokenDebug } from './components/TokenDebug';
+import { TokenPersistenceCheck } from './components/TokenPersistenceCheck';
+import { useAuthStore } from './store/useAuthStore';
+import { useEffect } from 'react';
+import { TokenMonitor } from './components/TokenMonitor';
+import { CheckoutPage } from './pages/CheckoutPage';
+import { PaymentPage } from './pages/PaymentPage';
+import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
+import { InvoicePage } from './pages/InvoicePage';
+import { OrderDetailsPage } from './pages/OrderDetailsPage';
 
 
 function App() {
+  useEffect(() => {
+    // Sync token on app start
+    const localToken = localStorage.getItem('jwt_token');
+    const storeToken = useAuthStore.getState().token;
+    
+    console.log('Initial token state:', { localToken, storeToken });
+    
+    if (localToken && !storeToken) {
+      console.log('Syncing token from localStorage to store');
+      useAuthStore.getState().setToken(localToken);
+    } else if (storeToken && !localToken) {
+      console.log('Syncing token from store to localStorage');
+      localStorage.setItem('jwt_token', storeToken);
+    }
+  }, []);
+
+  console.log('API URL:', import.meta.env.VITE_API_URL); // Debug log
+
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
+        <AuthDebug />
+        <TokenDebug />
+        <TokenPersistenceCheck />
+        <TokenMonitor />
         <Toaster position="top-right" />
         <Navbar />
         <Routes>
@@ -32,6 +65,11 @@ function App() {
           <Route path="/categories/design" element={<DesignPage />} />
           <Route path="/categories/marketing" element={<MarketingPage />} />
           <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/payment/:orderId" element={<PaymentPage />} />
+          <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
+          <Route path="/order/:orderId" element={<OrderDetailsPage />} />
+          <Route path="/order/:orderId/invoice" element={<InvoicePage />} />
         </Routes>
       </div>
     </Router>

@@ -1,60 +1,97 @@
-import { useEffect } from 'react';
-import { useOrderStore } from '../store/useOrderStore';
-import { useUserStore } from '../store/useUserStore';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { orderApi, Order } from '../services/orderApi';
+import { toast } from 'react-hot-toast';
 
 export function OrdersPage() {
-  const { orders, isLoading, error, fetchUserOrders } = useOrderStore();
-  const { currentUser } = useUserStore();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (currentUser?.id) {
-      fetchUserOrders(currentUser.id);
+    loadOrders();
+  }, []);
+
+  const loadOrders = async () => {
+    try {
+      const response = await orderApi.getMyOrders();
+      if (response.data) {
+        setOrders(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      toast.error('Failed to load orders');
+    } finally {
+      setIsLoading(false);
     }
-  }, [currentUser, fetchUserOrders]);
+  };
+
+  const downloadInvoice = async (orderId: number) => {
+    try {
+      const invoice = await orderApi.getInvoice(orderId);
+      const url = window.URL.createObjectURL(invoice);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoice_${orderId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      toast.error('Failed to download invoice');
+    }
+  };
 
   if (isLoading) {
-    return <div>Loading orders...</div>;
-  }
-
-  if (error) {
-    return <div className="text-red-600">{error}</div>;
+    return <div className="min-h-screen pt-24 text-center">Loading...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-24">
+    <div className="min-h-screen pt-24 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-2xl font-bold mb-6">My Orders</h1>
+        
         <div className="space-y-4">
           {orders.map((order) => (
-            <div key={order.id} className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex justify-between items-center mb-4">
+            <div key={order.orderId} className="bg-white p-6 rounded-lg shadow-sm">
+              <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h2 className="text-lg font-semibold">Order #{order.id}</h2>
+                  <h2 className="text-lg font-semibold">Order #{order.orderId}</h2>
                   <p className="text-sm text-gray-500">
-                    Placed on {new Date(order.createdAt).toLocaleDateString()}
+                    {new Date(order.orderDate).toLocaleDateString()}
                   </p>
                 </div>
-                <div className={`px-3 py-1 rounded-full text-sm ${
-                  order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                  order.status === 'in-transit' ? 'bg-blue-100 text-blue-800' :
-                  'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                  {order.orderStatus}
+                </span>
+              </div>
+              
+              <div className="border-t pt-4">
+                {order.orderItems.map((item) => (
+                  <div key={item.id} className="flex justify-between py-2">
+                    <div>
+                      <p className="font-medium">{item.product.name}</p>
+                      <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+                    </div>
+                    <p className="font-medium">${item.price.toFixed(2)}</p>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="border-t pt-4 mt-4">
+                <div className="flex justify-between font-bold">
+                  <span>Total:</span>
+                  <span>${order.totalAmount.toFixed(2)}</span>
                 </div>
               </div>
-              <div className="border-t pt-4">
-                <div className="space-y-2">
-                  {order.items.map((item) => (
-                    <div key={item.courseId} className="flex justify-between">
-                      <span>{item.courseId}</span>
-                      <span>${item.unitPrice}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="border-t mt-4 pt-4 flex justify-between font-semibold">
-                  <span>Total</span>
-                  <span>${order.totalAmount}</span>
-                </div>
+              
+              <div className="mt-4 flex justify-end space-x-4">
+                <button
+                  onClick={() => downloadInvoice(order.orderId)}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  Download Invoice
+                </button>
               </div>
             </div>
           ))}
