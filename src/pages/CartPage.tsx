@@ -11,26 +11,37 @@ export function CartPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      toast.error('Please sign in to view your cart');
-      navigate('/signin');
-      return;
-    }
-
-    // Only load if cart is empty
+    // Load cart for all users (authenticated or not)
     if (!cart.id) {
       loadCart().catch((error) => {
         console.error('Cart loading error:', error);
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          toast.error('Session expired. Please sign in again.');
-          navigate('/signin');
-        } else {
-          toast.error('Failed to load cart');
-        }
+        toast.error('Failed to load cart');
       });
     }
-  }, [cart.id, loadCart, navigate, getToken]);
+  }, [cart.id, loadCart]);
+
+  const handleProceedToCheckout = () => {
+    const token = getToken();
+    
+    if (!token) {
+      // Store cart state in localStorage before redirecting
+      localStorage.setItem('pendingCheckout', 'true');
+      
+      // Redirect to sign in with return path
+      navigate('/signin', { 
+        state: { 
+          from: '/checkout',
+          message: 'Please sign in or create an account to complete your purchase',
+          cartTotal: cart.totalAmount,
+          itemCount: cart.items.length
+        } 
+      });
+      return;
+    }
+
+    // User is authenticated, proceed to checkout
+    navigate('/checkout');
+  };
 
   if (isLoading) {
     return (
@@ -87,13 +98,20 @@ export function CartPage() {
                 <span>${cart.totalAmount?.toFixed(2) || '0.00'}</span>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex flex-col space-y-4">
                 <button
-                  onClick={() => navigate('/checkout')}
-                  className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors"
+                  onClick={handleProceedToCheckout}
+                  className="w-full bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors"
                 >
                   Proceed to Checkout
                 </button>
+                
+                {/* Optional: Show sign in message for guest users */}
+                {!getToken() && (
+                  <p className="text-sm text-gray-500 text-center">
+                    Sign in or create an account to complete your purchase
+                  </p>
+                )}
               </div>
             </div>
           </>

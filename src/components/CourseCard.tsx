@@ -15,43 +15,17 @@ interface CourseCardProps {
 
 export function CourseCard({ course, className }: CourseCardProps) {
   const { addItem } = useCartStore();
-  const { currentUser } = useUserStore();
-  const { getToken } = useAuthStore();
   const navigate = useNavigate();
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     
-    const currentToken = getToken();
-    const backupToken = localStorage.getItem('jwt_token');
-    
-    console.log('Auth state:', { 
-      currentUser, 
-      token: currentToken,
-      backupToken,
-      hasToken: !!(currentToken || backupToken)
-    });
-    
-    if (!currentUser || !(currentToken || backupToken)) {
-      toast.error('Please sign in to add items to cart');
-      navigate('/signin');
-      return;
-    }
-
     try {
       await addItem(course);
       toast.success('Added to cart');
     } catch (error) {
       console.error('Add to cart error:', error);
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          useAuthStore.getState().clearToken();
-          toast.error('Session expired. Please sign in again.');
-          navigate('/signin');
-        } else {
-          toast.error('Failed to add item to cart');
-        }
-      }
+      toast.error('Failed to add item to cart');
     }
   };
 

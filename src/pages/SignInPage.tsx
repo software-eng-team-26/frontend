@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useUserStore } from '../store/useUserStore';
+import { useCartStore } from '../store/useCartStore';
 import { authApi } from '../services/authApi';
 import { toast } from 'react-hot-toast';
 
@@ -10,27 +11,39 @@ export function SignInPage() {
   const [password, setPassword] = useState('');
   const { setToken } = useAuthStore();
   const { setCurrentUser } = useUserStore();
+  const { loadCart } = useCartStore();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
       const response = await authApi.signIn({ email, password });
-      console.log('Sign in response:', response);
-
+      
       if (response.data?.data) {
         const { token, user } = response.data.data;
         setToken(token);
         setCurrentUser(user);
-        toast.success('Successfully signed in!');
-        navigate('/');
-      } else {
-        toast.error('Invalid response from server');
+        
+        // Load the user's cart after authentication
+        await loadCart();
+
+        // Check if we need to redirect to checkout
+        const pendingCheckout = localStorage.getItem('pendingCheckout');
+        if (pendingCheckout) {
+          localStorage.removeItem('pendingCheckout');
+          toast.success('Successfully signed in! Proceeding to checkout...');
+          navigate('/checkout');
+        } else {
+          const returnPath = location.state?.from || '/';
+          toast.success('Successfully signed in!');
+          navigate(returnPath);
+        }
       }
     } catch (error) {
       console.error('Sign in error:', error);
-      toast.error('Failed to sign in');
+      toast.error('Failed to sign in. Please check your credentials.');
     }
   };
 

@@ -36,10 +36,15 @@ export const cartApi = {
   },
 
   async addItemToCart(productId: number, quantity: number = 1) {
-    const response = await api.post<ApiResponse<Cart>>('/carts/add-item', null, {
-      params: { productId, quantity }
-    });
-    return response;
+    try {
+      const response = await api.post<ApiResponse<Cart>>('/carts/add-item', null, {
+        params: { productId, quantity }
+      });
+      return response;
+    } catch (error) {
+      console.error('Error in addItemToCart:', error);
+      throw error;
+    }
   },
 
   async removeItemFromCart(cartId: number, productId: number) {

@@ -37,32 +37,12 @@ export const useCartStore = create<CartState>()(
       error: null,
 
       loadCart: async () => {
-        if (get().isLoading) return;
-        
         set({ isLoading: true, error: null });
         try {
           const response = await cartApi.getCurrentCart();
-          console.log('Load cart response:', response);
-          
           if (response.data?.data) {
-            const cart = response.data.data;
-            
-            // Ensure cart has required properties
-            const validCart = {
-              id: cart.id || null,
-              items: Array.isArray(cart.items) ? cart.items : [],
-              totalAmount: cart.totalAmount || 0
-            };
-            
             set({ 
-              cart: validCart,
-              isLoading: false,
-              error: null
-            });
-          } else {
-            console.error('Invalid cart data:', response.data);
-            set({ 
-              cart: { id: null, items: [], totalAmount: 0 },
+              cart: response.data.data,
               isLoading: false,
               error: null
             });
@@ -73,29 +53,17 @@ export const useCartStore = create<CartState>()(
             error: 'Failed to load cart',
             isLoading: false
           });
-          throw error;
         }
       },
 
       addItem: async (product) => {
         try {
           const response = await cartApi.addItemToCart(product.id);
-          console.log('Add item response:', response.data);
-          
           if (response.data?.data) {
-            const cart = response.data.data;
-            set({ 
-              cart: {
-                id: cart.id,
-                items: cart.items || [],
-                totalAmount: cart.totalAmount || 0
-              }
-            });
-            toast.success('Item added to cart');
+            set({ cart: response.data.data });
           }
         } catch (error) {
           console.error('Error adding item:', error);
-          toast.error('Failed to add item to cart');
           throw error;
         }
       },
