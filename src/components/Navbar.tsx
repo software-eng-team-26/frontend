@@ -137,14 +137,21 @@ export function Navbar() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
             {currentUser ? (
               <>
-                <CartIcon />
+                <Link to="/cart" className="relative">
+                  <CartIcon />
+                </Link>
                 <UserMenu />
               </>
             ) : (
-              <AuthButtons />
+              <div className="flex items-center space-x-6">
+                <Link to="/cart" className="relative">
+                  <CartIcon />
+                </Link>
+                <AuthButtons />
+              </div>
             )}
           </div>
         </div>

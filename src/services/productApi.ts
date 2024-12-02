@@ -3,9 +3,13 @@ import { api } from './api';
 export interface ProductDto {
   id: number;
   name: string;
+  title: string;
   description: string;
   price: number;
   imageUrl?: string;
+  thumbnail?: string;
+  instructor?: string;
+  inventory: number;
   category?: {
     id: number;
     name: string;
