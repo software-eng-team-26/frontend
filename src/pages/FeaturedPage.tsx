@@ -14,11 +14,12 @@ export const FeaturedPage = () => {
   }, []);
 
   const fetchCourses = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       const response = await productApi.getAllProducts();
       if (response.data) {
-        setCourses(response.data);
+        const featuredCourses = response.data.filter(course => course.featured); // sadece featured olanları al
+        setCourses(featuredCourses); // filtered datayı state'e ata
       }
     } catch (error) {
       toast.error('Failed to fetch courses');
@@ -27,6 +28,8 @@ export const FeaturedPage = () => {
       setIsLoading(false);
     }
   };
+  
+  
 
   const handleSortChange = (sortOption: 'lowToHigh' | 'highToLow') => {
     setSelectedSort(sortOption);

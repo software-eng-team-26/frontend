@@ -14,6 +14,7 @@ export interface ProductDto {
     id: number;
     name: string;
   };
+  featured: boolean;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9191/api/v1';
