@@ -23,7 +23,7 @@ import { PaymentPage } from './pages/PaymentPage';
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
 import { InvoicePage } from './pages/InvoicePage';
 import { OrderDetailsPage } from './pages/OrderDetailsPage';
-
+import { ProfilePage } from './pages/ProfilePage';
 
 function App() {
   useEffect(() => {
@@ -65,6 +65,7 @@ function App() {
           <Route path="/categories/design" element={<DesignPage />} />
           <Route path="/categories/marketing" element={<MarketingPage />} />
           <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/payment/:orderId" element={<PaymentPage />} />
           <Route path="/order-confirmation" element={<OrderConfirmationPage />} />

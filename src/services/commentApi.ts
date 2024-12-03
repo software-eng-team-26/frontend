@@ -1,35 +1,38 @@
-import { ApiResponse } from './api';
-import { Comment } from '../types/comment';
+import { api } from './api';
 
-interface CommentDto {
+export interface Comment {
+  id: number;
+  productId: number;
+  userId: number;
+  userName: string;
+  content: string;
+  rating: number;
+  createdAt: string;
+  approved: boolean;
+}
+
+export interface CommentRequest {
   productId: number;
   userId: number;
   content: string;
+  rating?: number | null;
+}
+
+export interface RatingRequest {
+  productId: number;
   rating: number;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9191/api/v1';
-
 export const commentApi = {
-  async addComment(comment: CommentDto): Promise<ApiResponse<Comment>> {
-    const response = await fetch(`${API_BASE_URL}/comments/add`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(comment),
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
+  getApprovedComments: async (productId: number) => {
+    return api.get<Comment[]>(`/comments/approved/${productId}`);
   },
 
-  async getApprovedComments(productId: number): Promise<ApiResponse<Comment[]>> {
-    const response = await fetch(`${API_BASE_URL}/comments/approved/${productId}`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  }
+  addRating: async (ratingData: RatingRequest) => {
+    return api.post<void>('/comments/rating', ratingData);
+  },
+
+  addComment: async (commentData: CommentRequest) => {
+    return api.post<Comment>('/comments/add', commentData);
+  },
 }; 

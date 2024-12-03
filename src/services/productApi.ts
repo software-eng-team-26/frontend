@@ -3,17 +3,23 @@ import { api } from './api';
 export interface ProductDto {
   id: number;
   name: string;
-  title: string;
-  description: string;
+  brand: string;
   price: number;
-  imageUrl?: string;
-  thumbnail?: string;
-  instructor?: string;
   inventory: number;
-  category?: {
-    id: number;
-    name: string;
-  };
+  description: string;
+  level: number;
+  duration: number;
+  moduleCount: number;
+  certification: boolean;
+  instructorName: string;
+  instructorRole: string;
+  thumbnailUrl: string;
+  curriculum: string[];
+  category: Category;
+  images: ImageDto[];
+  featured: boolean;
+  isNew: boolean;
+  averageRating: number;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9191/api/v1';

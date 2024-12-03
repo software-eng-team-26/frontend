@@ -6,25 +6,33 @@ import { productApi, ProductDto } from '../services/productApi';
 import { toast } from 'react-hot-toast';
 import { useUserStore } from '../store/useUserStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { Slider } from '@mui/material';
+import { SlidersHorizontal, Star, DollarSign } from 'lucide-react';
 
 export function HomePage() {
-  console.log('HomePage component rendering');
   const [courses, setCourses] = useState<ProductDto[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<ProductDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { currentUser } = useUserStore();
   const { token } = useAuthStore();
 
+  // Filter states
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const [minRating, setMinRating] = useState<number>(0);
+  const [sortBy, setSortBy] = useState<'popularity' | 'price-low' | 'price-high' | 'rating'>('popularity');
+
   useEffect(() => {
-    console.log('HomePage useEffect running');
     fetchCourses();
   }, []);
+
+  useEffect(() => {
+    filterCourses();
+  }, [courses, priceRange, minRating, sortBy]);
 
   const fetchCourses = async () => {
     try {
       setIsLoading(true);
-      console.log('Fetching courses...');
       const response = await productApi.getAllProducts();
-      console.log('Courses response:', response);
       if (response.data) {
         setCourses(response.data);
       }
@@ -34,6 +42,38 @@ export function HomePage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const filterCourses = () => {
+    let filtered = [...courses];
+
+    // Apply price filter
+    filtered = filtered.filter(
+      course => course.price >= priceRange[0] && course.price <= priceRange[1]
+    );
+
+    // Apply rating filter
+    filtered = filtered.filter(
+      course => (course.averageRating || 0) >= minRating
+    );
+
+    // Apply sorting
+    switch (sortBy) {
+      case 'popularity':
+        filtered.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
+        break;
+      case 'price-low':
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-high':
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+      case 'rating':
+        filtered.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
+        break;
+    }
+
+    setFilteredCourses(filtered);
   };
 
   return (
@@ -68,72 +108,110 @@ export function HomePage() {
         {/* Categories */}
         <CategoryNav />
 
-        {/* All Courses */}
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">All Courses</h2>
-            <Link 
-              to="/courses" 
-              className="text-indigo-600 hover:text-indigo-800 font-medium"
-            >
-              View All
-            </Link>
-          </div>
-          
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <p className="text-gray-600">Loading courses...</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.isArray(courses) && courses.length > 0 ? (
-                courses.map((course) => (
-                  <CourseCard key={course.id} course={course} />
-                ))
-              ) : (
-                <p className="col-span-3 text-center text-gray-600">
-                  No courses available
-                </p>
-              )}
-            </div>
-          )}
-        </section>
-
-        {/* Why Choose Us */}
-        <section className="bg-white rounded-2xl p-8 mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
-            Why Choose EduMart?
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                title: 'Expert Instructors',
-                description:
-                  'Learn from industry professionals with years of experience',
-              },
-              {
-                title: 'Flexible Learning',
-                description:
-                  'Study at your own pace with lifetime access to courses',
-              },
-              {
-                title: 'Career-Focused Content',
-                description:
-                  "Gain practical skills that are relevant in today's job market",
-              },
-            ].map((feature) => (
-              <div
-                key={feature.title}
-                className="text-center p-6 rounded-lg bg-gray-50"
-              >
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {feature.title}
+        {/* Main Content with Filters */}
+        <div className="flex gap-8 mt-12">
+          {/* Filters Sidebar */}
+          <div className="w-64 flex-shrink-0">
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <SlidersHorizontal className="w-5 h-5" />
+                  Filters
                 </h3>
-                <p className="text-gray-600">{feature.description}</p>
+                
+                {/* Price Range Filter */}
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                    <DollarSign className="w-4 h-4" />
+                    Price Range
+                  </h4>
+                  <Slider
+                    value={priceRange}
+                    onChange={(_, newValue) => setPriceRange(newValue as [number, number])}
+                    valueLabelDisplay="auto"
+                    min={0}
+                    max={1000}
+                  />
+                  <div className="flex justify-between mt-2 text-sm text-gray-600">
+                    <span>${priceRange[0]}</span>
+                    <span>${priceRange[1]}</span>
+                  </div>
+                </div>
+
+                {/* Rating Filter */}
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                    <Star className="w-4 h-4" />
+                    Minimum Rating
+                  </h4>
+                  <Slider
+                    value={minRating}
+                    onChange={(_, newValue) => setMinRating(newValue as number)}
+                    valueLabelDisplay="auto"
+                    min={0}
+                    max={5}
+                    step={0.5}
+                  />
+                </div>
+
+                {/* Sort Options */}
+                <div>
+                  <h4 className="text-sm font-medium mb-3">Sort By</h4>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="w-full p-2 border rounded-md"
+                  >
+                    <option value="popularity">Popularity</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="rating">Rating</option>
+                  </select>
+                </div>
               </div>
-            ))}
+            </div>
           </div>
-        </section>
+
+          {/* Courses Grid */}
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">All Courses</h2>
+              <p className="text-gray-600">
+                Showing {filteredCourses.length} of {courses.length} courses
+              </p>
+            </div>
+            
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <p className="text-gray-600">Loading courses...</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCourses.length > 0 ? (
+                  filteredCourses.map((course) => (
+                    <CourseCard key={course.id} course={course} />
+                  ))
+                ) : (
+                  <div className="col-span-3 text-center py-12">
+                    <p className="text-gray-600 text-lg">
+                      No courses match your filters
+                    </p>
+                    <button
+                      onClick={() => {
+                        setPriceRange([0, 1000]);
+                        setMinRating(0);
+                        setSortBy('popularity');
+                      }}
+                      className="mt-4 text-indigo-600 hover:text-indigo-800"
+                    >
+                      Reset Filters
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </main>
     </div>
   );

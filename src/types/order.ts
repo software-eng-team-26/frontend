@@ -1,26 +1,21 @@
 export enum OrderStatus {
   PENDING = 'PENDING',
-  PAID = 'PAID',
   PROCESSING = 'PROCESSING',
-  IN_TRANSIT = 'IN_TRANSIT',
+  PROVISIONING = 'PROVISIONING',
   DELIVERED = 'DELIVERED'
 }
 
 export interface Order {
-  orderId: number;
+  id: number;
   orderDate: string;
   totalAmount: number;
-  orderStatus: OrderStatus;
-  shippingAddress: string;
-  shippingEmail: string;
-  items: OrderItem[];
-}
-
-export interface OrderItem {
-  id: number;
-  product: ProductDto;
-  quantity: number;
-  price: number;
+  status: OrderStatus;
+  items: Array<{
+    id: number;
+    productName: string;
+    quantity: number;
+    price: number;
+  }>;
 }
 
 export interface ShippingDetails {

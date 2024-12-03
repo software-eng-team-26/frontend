@@ -20,6 +20,13 @@ import { useUserStore } from '../store/useUserStore';
 import { Comment } from '../types/comment';
 import { commentApi } from '../services/commentApi';
 
+interface ApiError extends Error {
+  response?: {
+    status: number;
+    data: unknown;
+  };
+}
+
 // Add this component for star rating
 function StarRating({ rating, setRating }: { rating: number; setRating?: (rating: number) => void }) {
   return (
@@ -71,18 +78,69 @@ export function CoursePage() {
 
   const fetchComments = async (id: number) => {
     try {
+      console.log('Fetching comments for course:', id);
       const response = await commentApi.getApprovedComments(id);
-      if (response.data) {
-        setComments(response.data);
+      console.log('Comments response:', response);
+      if (response.data?.data) {
+        setComments(response.data.data);
+      } else {
+        setComments([]);
       }
     } catch (error) {
+      const err = error as ApiError;
+      console.error('Error fetching comments:', err);
       toast.error('Failed to fetch comments');
-      console.error('Error fetching comments:', error);
+      setComments([]);
+    }
+  };
+
+  const handleAddRating = async (rating: number) => {
+    if (!currentUser) {
+      toast.error('Please sign in to rate this course');
+      return;
+    }
+
+    try {
+      await commentApi.addRating({
+        productId: parseInt(courseId!),
+        rating: rating
+      });
+      
+      // Fetch fresh course data and comments
+      const [courseResponse, commentsResponse] = await Promise.all([
+        productApi.getProductById(parseInt(courseId!)),
+        commentApi.getApprovedComments(parseInt(courseId!))
+      ]);
+
+      if (courseResponse.data) {
+        setCourse(courseResponse.data);
+      }
+      if (commentsResponse.data?.data) {
+        setComments(commentsResponse.data.data);
+      }
+      
+      toast.success('Rating added successfully');
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number; data?: { message?: string } } };
+      console.error('Rating error:', err);
+      handleError(err, 'Failed to add rating');
+    }
+  };
+
+  const handleError = (err: { response?: { status?: number; data?: { message?: string } } }, defaultMessage: string) => {
+    console.error('Error:', err);
+    if (err.response?.status === 403) {
+      toast.error('Please sign in again to continue');
+    } else if (err.response?.data?.message) {
+      toast.error(err.response.data.message);
+    } else {
+      toast.error(defaultMessage);
     }
   };
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!currentUser) {
       toast.error('Please sign in to leave a comment');
       return;
@@ -95,25 +153,73 @@ export function CoursePage() {
 
     try {
       const commentData = {
-        productId: parseInt(courseId!),
-        userId: currentUser.id,
-        content: newComment,
-        rating: newRating
+        productId: Number(courseId),
+        userId: Number(currentUser.id),
+        content: newComment.trim(),
+        rating: newRating > 0 ? newRating : null
       };
 
+      console.log('Sending comment data:', commentData);
       await commentApi.addComment(commentData);
       
-      // Refresh comments after adding new one
-      await fetchComments(parseInt(courseId!));
+      // Single toast message for both rating and comment
+      toast.success(
+        newRating > 0 
+          ? 'Comment submitted for review and rating added' 
+          : 'Comment submitted for review'
+      );
       
       setNewComment('');
-      setNewRating(5);
-      toast.success('Comment added successfully');
-    } catch (error) {
-      toast.error('Failed to add comment');
-      console.error('Error adding comment:', error);
+      setNewRating(0);
+      
+      // Refresh data
+      await fetchCourse(parseInt(courseId!));
+      await fetchComments(parseInt(courseId!));
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number; data?: { message?: string } } };
+      console.error('Comment error:', err);
+      handleError(err, 'Failed to add comment');
     }
   };
+
+  const renderComments = () => (
+    <div className="space-y-6">
+      {comments && comments.length > 0 ? (
+        comments.map((comment) => (
+          <div key={comment.id} className="border-b pb-6 last:border-0">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-3">
+                <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                  <User className="h-6 w-6 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">{comment.userName}</p>
+                  <p className="text-sm text-gray-500">
+                    {new Date(comment.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </div>
+              </div>
+              {comment.rating > 0 && <StarRating rating={comment.rating} />}
+            </div>
+            <p className="text-gray-700 mt-2">{comment.content}</p>
+          </div>
+        ))
+      ) : (
+        <div className="text-center py-8">
+          <p className="text-gray-500 mb-4">No reviews yet. Be the first to review!</p>
+          {!currentUser && (
+            <p className="text-sm text-gray-400">
+              Please sign in to leave a review
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
 
   if (isLoading) {
     return (
@@ -146,7 +252,7 @@ export function CoursePage() {
           <div className="flex flex-wrap items-center gap-6">
             <div className="flex items-center">
               <User className="h-5 w-5 mr-2" />
-              <span>{course.instructorName}</span>
+              <span>{course.instructor}</span>
             </div>
             <div className="flex items-center">
               <Briefcase className="h-5 w-5 mr-2" />
@@ -155,6 +261,10 @@ export function CoursePage() {
             <div className="flex items-center">
               <Box className="h-5 w-5 mr-2" />
               <span>{course.brand}</span>
+            </div>
+            <div className="flex items-center">
+              <StarRating rating={Math.round(course.averageRating || 0)} />
+              <span className="ml-2">{course.averageRating?.toFixed(1) || '0.0'}</span>
             </div>
           </div>
         </div>
@@ -192,7 +302,7 @@ export function CoursePage() {
               <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
                 <h2 className="text-2xl font-bold mb-6">Course Curriculum</h2>
                 <div className="space-y-4">
-                  {course.curriculum.map((item, index) => (
+                  {course.curriculum.map((item: string, index: number) => (
                     <div key={index} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
                       <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
                       <span className="text-gray-700">{item}</span>
@@ -212,7 +322,7 @@ export function CoursePage() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-medium">{course.instructorName}</h3>
+                  <h3 className="text-lg font-medium">{course.instructor}</h3>
                   <p className="text-gray-600">{course.instructorRole}</p>
                 </div>
               </div>
@@ -222,14 +332,29 @@ export function CoursePage() {
             <div className="bg-white rounded-xl shadow-sm p-6 mt-8">
               <h2 className="text-2xl font-bold mb-6">Student Reviews</h2>
               
+              {/* Show current average rating */}
+              <div className="mb-6">
+                <h3 className="text-lg font-medium mb-2">Course Rating</h3>
+                <div className="flex items-center gap-2">
+                  <StarRating rating={course.averageRating || 0} />
+                  <span className="text-gray-600">({course.averageRating?.toFixed(1) || '0.0'})</span>
+                </div>
+              </div>
+              
+              {/* Add Rating Section */}
+              <div className="mb-6">
+                <h3 className="text-lg font-medium mb-2">Rate this course</h3>
+                <StarRating 
+                  rating={newRating} 
+                  setRating={(rating) => {
+                    setNewRating(rating);
+                    handleAddRating(rating);
+                  }} 
+                />
+              </div>
+
               {/* Add Comment Form */}
               <form onSubmit={handleAddComment} className="mb-8">
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Your Rating
-                  </label>
-                  <StarRating rating={newRating} setRating={setNewRating} />
-                </div>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Your Comment
@@ -251,31 +376,7 @@ export function CoursePage() {
               </form>
 
               {/* Comments List */}
-              <div className="space-y-6">
-                {comments.length > 0 ? (
-                  comments.map((comment) => (
-                    <div key={comment.id} className="border-b pb-6 last:border-0">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-3">
-                          <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                            <User className="h-6 w-6 text-indigo-600" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">{comment.userName}</p>
-                            <p className="text-sm text-gray-500">
-                              {new Date(comment.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                        <StarRating rating={comment.rating} />
-                      </div>
-                      <p className="text-gray-700 mt-2">{comment.content}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-center text-gray-500">No reviews yet. Be the first to review!</p>
-                )}
-              </div>
+              {renderComments()}
             </div>
           </div>
 

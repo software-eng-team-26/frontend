@@ -12,7 +12,10 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       token: null,
-      setToken: (token) => set({ token }),
+      setToken: (token) => {
+        set({ token });
+        window.dispatchEvent(new CustomEvent('user-logged-in'));
+      },
       clearToken: () => set({ token: null }),
       getToken: () => get().token,
     }),

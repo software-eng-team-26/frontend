@@ -64,6 +64,44 @@ export const useCartStore = create<CartState>()(
         }
       },
 
+      transferGuestCart: async () => {
+        const currentCart = get().cart;
+        const token = useAuthStore.getState().token;
+        
+        if (!token || currentCart.items.length === 0) {
+          return;
+        }
+
+        set({ isLoading: true });
+        
+        try {
+          // Transfer each item from the guest cart to the server
+          for (const item of currentCart.items) {
+            for (let i = 0; i < item.quantity; i++) {
+              await cartApi.addItemToCart(item.product.id);
+            }
+          }
+          
+          // After transfer, load the server cart
+          const response = await cartApi.getCurrentCart();
+          if (response.data?.data) {
+            set({ 
+              cart: response.data.data,
+              isLoading: false,
+              error: null
+            });
+            toast.success('Cart transferred successfully');
+          }
+        } catch (error) {
+          console.error('Error transferring cart:', error);
+          set({ 
+            error: 'Failed to transfer cart',
+            isLoading: false
+          });
+          toast.error('Failed to transfer cart');
+        }
+      },
+
       addItem: async (product) => {
         const token = useAuthStore.getState().token;
         const currentCart = get().cart;
@@ -74,6 +112,7 @@ export const useCartStore = create<CartState>()(
             const response = await cartApi.addItemToCart(product.id);
             if (response.data?.data) {
               set({ cart: response.data.data });
+              // toast.success('Item added to cart');
             }
           } else {
             // Handle guest cart locally
@@ -111,32 +150,26 @@ export const useCartStore = create<CartState>()(
                 cart: {
                   ...currentCart,
                   items: [...currentCart.items, newItem],
-                  totalAmount: currentCart.totalAmount + newItem.totalPrice
+                  totalAmount: currentCart.totalAmount + product.price
                 }
               });
             }
+            // toast.success('Item added to cart');
           }
         } catch (error) {
-          console.error('Error adding item:', error);
-          throw error;
+          console.error('Error adding item to cart:', error);
+          toast.error('Failed to add item to cart');
         }
       },
 
-      removeItem: async (productId: number) => {
+      removeItem: async (productId) => {
         const token = useAuthStore.getState().token;
         const currentCart = get().cart;
 
         try {
           if (token) {
             // Remove from server cart for authenticated users
-            if (!currentCart.id) {
-              toast.error('No active cart found');
-              return;
-            }
-
-            await cartApi.removeItemFromCart(currentCart.id, productId);
-            const response = await cartApi.getCurrentCart();
-            
+            const response = await cartApi.removeItemFromCart(productId);
             if (response.data?.data) {
               set({ cart: response.data.data });
               toast.success('Item removed from cart');
@@ -144,30 +177,18 @@ export const useCartStore = create<CartState>()(
           } else {
             // Handle guest cart locally
             const updatedItems = currentCart.items.filter(item => item.product.id !== productId);
-            const newTotalAmount = updatedItems.reduce((sum, item) => sum + item.totalPrice, 0);
-            
             set({
               cart: {
                 ...currentCart,
                 items: updatedItems,
-                totalAmount: newTotalAmount
+                totalAmount: updatedItems.reduce((sum, item) => sum + item.totalPrice, 0)
               }
             });
             toast.success('Item removed from cart');
           }
         } catch (error) {
-          console.error('Error removing item:', error);
-          if (axios.isAxiosError(error)) {
-            if (error.response?.status === 403) {
-              toast.error('Please sign in to manage your cart');
-              useAuthStore.getState().clearToken();
-            } else if (error.response?.status === 404) {
-              toast.error('Cart or item not found');
-            } else {
-              toast.error('Failed to remove item from cart');
-            }
-          }
-          throw error;
+          console.error('Error removing item from cart:', error);
+          toast.error('Failed to remove item from cart');
         }
       },
 
@@ -176,52 +197,32 @@ export const useCartStore = create<CartState>()(
 
         try {
           if (token) {
+            // Clear server cart for authenticated users
             await cartApi.clearCart();
           }
-          set({ cart: { id: null, items: [], totalAmount: 0 } });
+          // Always clear local state
+          set({
+            cart: {
+              id: null,
+              items: [],
+              totalAmount: 0
+            }
+          });
+          toast.success('Cart cleared');
         } catch (error) {
           console.error('Error clearing cart:', error);
-          throw error;
+          toast.error('Failed to clear cart');
         }
-      },
-
-      transferGuestCart: async () => {
-        const token = useAuthStore.getState().token;
-        const currentCart = get().cart;
-
-        if (token && currentCart.items.length > 0) {
-          try {
-            // Transfer each item from guest cart to server
-            await Promise.all(
-              currentCart.items.map(async (item) => {
-                try {
-                  // Use the server's addItem endpoint for each item
-                  await cartApi.addItemToCart(item.product.id, item.quantity);
-                } catch (error) {
-                  console.error('Failed to transfer item:', error);
-                  throw error;
-                }
-              })
-            );
-
-            // After successful transfer, load the server cart
-            const response = await cartApi.getCurrentCart();
-            if (response.data?.data) {
-              set({ cart: response.data.data });
-            }
-
-            toast.success('Cart items transferred successfully');
-          } catch (error) {
-            console.error('Failed to transfer guest cart:', error);
-            toast.error('Failed to transfer cart items');
-            throw error;
-          }
-        }
-      },
+      }
     }),
     {
       name: 'cart-storage',
-      partialize: (state) => ({ cart: state.cart }),
     }
   )
 );
+
+// Listen for user login event
+window.addEventListener('user-logged-in', () => {
+  // Transfer guest cart to server cart when user logs in
+  useCartStore.getState().transferGuestCart();
+});
