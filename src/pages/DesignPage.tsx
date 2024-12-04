@@ -20,7 +20,7 @@ export function DesignPage() {
       if (response.data) {
         // Filter courses by Design category (ID: 3)
         const designCourses = response.data.filter(
-          course => course.category?.id === 3
+          course => course.category?.id === 2
         );
         setCourses(designCourses);
       }

@@ -106,7 +106,7 @@ export function CheckoutPage() {
     }
 
     if (!cart.items.length) {
-      toast.error('Your cart is empty');
+      // toast.error('Your cart is empty');
       navigate('/cart');
     }
   }, [cart.items.length, getToken, navigate]);

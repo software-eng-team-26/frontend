@@ -20,7 +20,7 @@ export function ProgrammingPage() {
       if (response.data) {
         // Filter courses by Programming category (ID: 2)
         const programmingCourses = response.data.filter(
-          course => course.category?.id === 2
+          course => course.category?.id === 1
         );
         setCourses(programmingCourses);
       }

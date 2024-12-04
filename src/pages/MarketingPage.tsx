@@ -20,7 +20,7 @@ export function MarketingPage() {
       if (response.data) {
         // Filter courses by Marketing category (ID: 4)
         const marketingCourses = response.data.filter(
-          course => course.category?.id === 4
+          course => course.category?.id === 3
         );
         setCourses(marketingCourses);
       }

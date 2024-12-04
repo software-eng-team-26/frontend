@@ -395,10 +395,20 @@ export function CoursePage() {
               </div>
               <button
                 onClick={() => addItem(course)}
-                className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg text-lg font-medium hover:bg-indigo-700 transition-colors mb-4"
+                disabled={course.inventory <= 0}
+                className={`w-full px-6 py-3 rounded-lg text-lg font-medium transition-colors mb-4 ${
+                  course.inventory <= 0 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                }`}
               >
-                Add to Cart
+                {course.inventory <= 0 ? 'Out of Stock' : 'Add to Cart'}
               </button>
+              {course.inventory <= 0 && (
+                <p className="text-red-500 text-sm text-center mb-4">
+                  This course is currently full. Please check back later.
+                </p>
+              )}
               <div className="border-t pt-4">
                 <h4 className="font-medium text-gray-900 mb-4">This course includes:</h4>
                 <ul className="space-y-3">
