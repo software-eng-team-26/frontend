@@ -24,8 +24,33 @@ import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
 import { InvoicePage } from './pages/InvoicePage';
 import { OrderDetailsPage } from './pages/OrderDetailsPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { useWishlistStore } from './store/useWishlistStore';
+import { useUserStore } from './store/useUserStore';
+import { WishlistPage } from './pages/WishlistPage';
+import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { AdminLayout } from './pages/admin/AdminLayout';
+import { DashboardOverview } from './pages/admin/components/DashboardOverview';
+import { SalesManagement } from './pages/admin/components/SalesManagement';
+import { DiscountManagement } from './pages/admin/components/DiscountManagement';
+import { InvoiceManagement } from './pages/admin/components/InvoiceManagement';
+import { Analytics } from './pages/admin/components/Analytics';
+import { ProductManagement } from './pages/admin/components/ProductManagement';
+import { StockManagement } from './pages/admin/components/StockManagement';
+import { DeliveryManagement } from './pages/admin/components/DeliveryManagement';
+import { CommentManagement } from './pages/admin/components/CommentManagement';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { CategoryManagement } from './pages/admin/components/CategoryManagement';
 
 function App() {
+  const { user } = useUserStore();
+  const { fetchWishlist } = useWishlistStore();
+
+  useEffect(() => {
+    if (user) {
+      fetchWishlist(user.id);
+    }
+  }, [user]);
+
   useEffect(() => {
     // Sync token on app start
     const localToken = localStorage.getItem('jwt_token');
@@ -71,6 +96,26 @@ function App() {
           <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
           <Route path="/order/:orderId" element={<OrderDetailsPage />} />
           <Route path="/order/:orderId/invoice" element={<InvoicePage />} />
+          <Route path="/wishlist" element={<WishlistPage />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<DashboardOverview />} />
+            <Route path="sales" element={<SalesManagement />} />
+            <Route path="discounts" element={<DiscountManagement />} />
+            <Route path="invoices" element={<InvoiceManagement />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="products" element={<ProductManagement />} />
+            <Route path="categories" element={<CategoryManagement />} />
+            <Route path="stock" element={<StockManagement />} />
+            <Route path="delivery" element={<DeliveryManagement />} />
+            <Route path="comments" element={<CommentManagement />} />
+          </Route>
         </Routes>
       </div>
     </Router>

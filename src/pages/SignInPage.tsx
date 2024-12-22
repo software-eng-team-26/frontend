@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useUserStore } from '../store/useUserStore';
@@ -10,7 +10,7 @@ export function SignInPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { setToken } = useAuthStore();
-  const { setCurrentUser } = useUserStore();
+  const { setUser } = useUserStore();
   const { loadCart } = useCartStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,7 +24,7 @@ export function SignInPage() {
       if (response.data?.data) {
         const { token, user } = response.data.data;
         setToken(token);
-        setCurrentUser(user);
+        setUser(user);
         
         // Load the user's cart after authentication
         await loadCart();
@@ -37,7 +37,12 @@ export function SignInPage() {
           navigate('/checkout');
         } else {
           const returnPath = location.state?.from || '/';
+          const message = location.state?.message;
+          
           toast.success('Successfully signed in!');
+          if (message) {
+            toast.success(message);
+          }
           navigate(returnPath);
         }
       }

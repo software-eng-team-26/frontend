@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { GraduationCap, Search, ShoppingCart } from 'lucide-react';
+import { GraduationCap, Search, ShoppingCart, Heart, ChevronDown } from 'lucide-react';
 import { useCartStore } from '../store/useCartStore';
 import { useUserStore } from '../store/useUserStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -8,6 +8,8 @@ import { toast } from 'react-hot-toast';
 import { CartIcon } from './CartIcon';
 import { UserMenu } from './UserMenu';
 import { AuthButtons } from './AuthButtons';
+import { useWishlistStore } from '../store/useWishlistStore';
+import { useAuth } from '../hooks/useAuth';
 
 export function Navbar() {
   const { cart } = useCartStore();
@@ -20,7 +22,11 @@ export function Navbar() {
   const isActive = (path: string) => location.pathname.startsWith(path);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  
+  const { items: wishlistItems } = useWishlistStore();
+  const { isAuthenticated } = useAuth();
+
+  const showAdminLink = isAuthenticated;
+
   const handleMouseEnter = () => {
     clearTimeout(timeoutId);
     setDropdownOpen(true);
@@ -138,15 +144,72 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center space-x-6">
-            {currentUser ? (
+            {isAuthenticated ? (
               <>
+                <Link
+                  to="/wishlist"
+                  className="relative p-2 text-gray-600 hover:text-indigo-600 transition-colors"
+                >
+                  <Heart className="w-6 h-6" />
+                  {wishlistItems.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {wishlistItems.length}
+                    </span>
+                  )}
+                </Link>
                 <Link to="/cart" className="relative">
                   <CartIcon />
                 </Link>
+                <div className="relative group">
+                  <Link
+                    to="/admin"
+                    className="text-gray-600 hover:text-indigo-600 transition-colors flex items-center space-x-1"
+                  >
+                    <span>Admin</span>
+                    <ChevronDown className="w-4 h-4" />
+                  </Link>
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block">
+                    <Link
+                      to="/admin/sales"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Sales Management
+                    </Link>
+                    <Link
+                      to="/admin/discounts"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Discounts
+                    </Link>
+                    <Link
+                      to="/admin/invoices"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Invoices
+                    </Link>
+                    <Link
+                      to="/admin/analytics"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Analytics
+                    </Link>
+                  </div>
+                </div>
                 <UserMenu />
               </>
             ) : (
               <div className="flex items-center space-x-6">
+                <Link
+                  to="/wishlist"
+                  className="relative p-2 text-gray-600 hover:text-indigo-600 transition-colors"
+                >
+                  <Heart className="w-6 h-6" />
+                  {wishlistItems.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {wishlistItems.length}
+                    </span>
+                  )}
+                </Link>
                 <Link to="/cart" className="relative">
                   <CartIcon />
                 </Link>

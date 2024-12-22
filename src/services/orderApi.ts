@@ -1,6 +1,7 @@
 import { api } from './api';
 import { ApiResponse } from '../types/api';
 import { ShippingDetails, Order } from '../types/order';
+import { useAuthStore } from '../store/useAuthStore';
 
 interface OrderResponse {
   order: Order;
@@ -9,7 +10,12 @@ interface OrderResponse {
 
 export const orderApi = {
   createOrder: (shippingDetails: ShippingDetails) => {
-    return api.post<ApiResponse<OrderResponse>>('/orders/create', shippingDetails);
+    const token = useAuthStore.getState().getToken();
+    return api.post<ApiResponse<OrderResponse>>('/orders/create', shippingDetails, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
   },
 
   completePayment: (orderId: number) => {
@@ -23,10 +29,28 @@ export const orderApi = {
   },
 
   getOrder: (orderId: number) => {
-    return api.get<ApiResponse<any>>(`/orders/${orderId}`);
+    return api.get<ApiResponse<Order>>(`/orders/${orderId}`);
   },
 
   getUserOrders: () => {
-    return api.get<ApiResponse<any>>('/orders/my-orders');
+    return api.get<ApiResponse<Order[]>>('/orders/my-orders');
+  },
+
+  getAllOrders: () => {
+    const token = useAuthStore.getState().getToken();
+    return api.get<ApiResponse<Order[]>>('/orders/admin/all', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+  },
+
+  updateOrderStatus: (orderId: number, status: string) => {
+    const token = useAuthStore.getState().getToken();
+    return api.post<ApiResponse<Order>>(`/orders/${orderId}/update-status?status=${status}`, null, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
   }
 }; 

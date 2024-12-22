@@ -12,8 +12,27 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    host: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:9191',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   },
   define: {
     'process.env': process.env,
+  },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'chart.js',
+      'react-chartjs-2',
+      'lucide-react',
+      'zustand'
+    ]
   },
 });

@@ -16,4 +16,22 @@ export interface ProductDto {
   description: string;
   thumbnail: string;
   inventory: number;
+}
+
+export interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  inventory: number;
+  category: {
+    id: number;
+    name: string;
+  };
+  imageUrl?: string;
+  isOnSale?: boolean;
+  discountRate?: number;
+  originalPrice?: number;
+  saleStartDate?: string;
+  saleEndDate?: string;
 } 

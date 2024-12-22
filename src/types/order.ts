@@ -1,21 +1,21 @@
 export enum OrderStatus {
   PENDING = 'PENDING',
   PROCESSING = 'PROCESSING',
-  PROVISIONING = 'PROVISIONING',
-  DELIVERED = 'DELIVERED'
+  SHIPPED = 'SHIPPED',
+  DELIVERED = 'DELIVERED',
+  CANCELLED = 'CANCELLED'
 }
 
 export interface Order {
   id: number;
+  userId: number;
+  userName: string;
   orderDate: string;
-  totalAmount: number;
   status: OrderStatus;
-  items: Array<{
-    id: number;
-    productName: string;
-    quantity: number;
-    price: number;
-  }>;
+  totalAmount: number;
+  shippingAddress: string;
+  shippingEmail: string | null;
+  shippingPhone: string | null;
 }
 
 export interface ShippingDetails {
