@@ -56,6 +56,14 @@ export function AdminSidebar() {
           label="Analytics" 
           active={isActive('/admin/analytics')}
         />
+        {/* Refund Management */}
+        <SidebarLink
+          active={isActive('/admin/refunds')}
+          icon="refresh" // İlgili ikon.
+          label="Refund Management"
+          to="/admin/refunds"
+        />
+
 
         {/* Product Manager Section */}
         <div className="px-4 py-2 mt-6">
