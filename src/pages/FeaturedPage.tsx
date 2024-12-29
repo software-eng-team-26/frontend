@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import { CourseCard } from "../components/CourseCard";
 import SortingComponent from '../components/SortingComponent';
 import { productApi, ProductDto } from '../services/productApi';
@@ -14,11 +14,16 @@ export const FeaturedPage = () => {
   }, []);
 
   const fetchCourses = async () => {
+    
+    setIsLoading(true);
+    
     try {
-      setIsLoading(true);
+      
       const response = await productApi.getAllProducts();
       if (response.data) {
-        setCourses(response.data);
+        
+        const featuredCourses = response.data.filter(course => course.featured); // sadece featured olanları al
+        setCourses(featuredCourses); // filtered datayı state'e ata
       }
     } catch (error) {
       toast.error('Failed to fetch courses');
