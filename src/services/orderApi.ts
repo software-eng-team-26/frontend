@@ -52,5 +52,14 @@ export const orderApi = {
         'Authorization': `Bearer ${token}`
       }
     });
-  }
+  },
+
+  // Yeni Refund API Fonksiyonu
+  refundOrder: (orderId: number, itemIds: number[], token: string) => {
+    return api.post(`/orders/${orderId}/refund`, { itemIds }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+  
+
 }; 

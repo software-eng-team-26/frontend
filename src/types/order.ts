@@ -16,6 +16,7 @@ export interface Order {
   shippingAddress: string;
   shippingEmail: string | null;
   shippingPhone: string | null;
+  items: OrderItem[];
 }
 
 export interface ShippingDetails {
@@ -28,4 +29,14 @@ export interface ShippingDetails {
   state: string;
   zipCode: string;
   country: string;
+}
+
+export interface OrderItem{
+
+  id: number;
+  productName: string;
+  quantity: number;
+  price: number;
+
+
 }
