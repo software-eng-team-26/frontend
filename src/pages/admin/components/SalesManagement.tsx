@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Search, Plus, Edit, Trash2, XCircle, DollarSign } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, XCircle, DollarSign, Percent } from 'lucide-react';
 import { Modal } from '../../../components/Modal';
 import { ProductForm } from './ProductForm';
 import { useProductManagementStore } from '../../../store/admin/useProductManagementStore';
 import { LoadingSpinner } from '../../../components/LoadingSpinner';
 import { toast } from 'react-hot-toast';
+import { discountApi } from '../../../services/admin/discountApi';
+
+interface DiscountForm {
+  productId: number;
+  discountRate: number;
+}
 
 export function SalesManagement() {
   const { 
@@ -24,6 +30,7 @@ export function SalesManagement() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPrice, setEditingPrice] = useState<{[key: number]: string}>({});
+  const [editingDiscount, setEditingDiscount] = useState<{[key: number]: string}>({});
 
   useEffect(() => {
     fetchProducts();
@@ -65,6 +72,39 @@ export function SalesManagement() {
     } catch (error: any) {
       console.error('Failed to update price:', error);
       toast.error(error.message || 'Failed to update price');
+    }
+  };
+
+  const handleDiscountUpdate = async (productId: number, discountRate: string) => {
+    try {
+      const rate = parseFloat(discountRate);
+      if (isNaN(rate) || rate < 0 || rate > 100) {
+        toast.error('Please enter a valid discount rate between 0 and 100');
+        return;
+      }
+
+      const discountForm = {
+        productId: productId,
+        discountRate: rate
+      };
+
+      console.log('Sending discount data:', discountForm);
+
+      const response = await discountApi.createDiscount(discountForm);
+      
+      if (response.status === 200) {
+        await fetchProducts(); // Refresh products to show updated prices
+        setEditingDiscount(prev => {
+          const newState = { ...prev };
+          delete newState[productId];
+          return newState;
+        });
+        toast.success('Discount applied successfully');
+      }
+    } catch (error: any) {
+      console.error('Failed to apply discount:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to apply discount';
+      toast.error(errorMessage);
     }
   };
 
@@ -146,6 +186,9 @@ export function SalesManagement() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Instructor
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Discount
+              </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                 Actions
               </th>
@@ -162,7 +205,7 @@ export function SalesManagement() {
                       className="h-10 w-10 rounded-lg object-cover"
                     />
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                      <div className="text-sm font-medium text-gray-900">{product.title}</div>
                       <div className="text-sm text-gray-500">{product.brand}</div>
                     </div>
                   </div>
@@ -181,6 +224,71 @@ export function SalesManagement() {
                 <td className="px-6 py-4">
                   <div className="text-sm text-gray-900">{product.instructorName}</div>
                   <div className="text-sm text-gray-500">{product.instructorRole}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {editingDiscount[product.id] !== undefined ? (
+                    <div className="flex items-center justify-end space-x-2">
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={editingDiscount[product.id]}
+                        onChange={(e) => setEditingDiscount(prev => ({
+                          ...prev,
+                          [product.id]: e.target.value
+                        }))}
+                        className="w-24 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="0-100%"
+                      />
+                      <span className="text-sm text-gray-500">%</span>
+                      <button
+                        onClick={() => handleDiscountUpdate(product.id, editingDiscount[product.id])}
+                        className="text-green-600 hover:text-green-900"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingDiscount(prev => {
+                          const newState = { ...prev };
+                          delete newState[product.id];
+                          return newState;
+                        })}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-end">
+                      {product.isOnSale ? (
+                        <div className="flex items-center">
+                          <span className="text-sm text-green-600 mr-2">{product.discountRate}% off</span>
+                          <button
+                            onClick={() => setEditingDiscount(prev => ({
+                              ...prev,
+                              [product.id]: product.discountRate?.toString() || '0'
+                            }))}
+                            className="text-blue-600 hover:text-blue-900 flex items-center"
+                          >
+                            <Percent className="w-4 h-4 mr-1" />
+                            Edit
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setEditingDiscount(prev => ({
+                            ...prev,
+                            [product.id]: '0'
+                          }))}
+                          className="text-blue-600 hover:text-blue-900 flex items-center"
+                        >
+                          <Percent className="w-4 h-4 mr-1" />
+                          Add Discount
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   {editingPrice[product.id] !== undefined ? (

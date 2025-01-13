@@ -175,12 +175,12 @@ export function Navbar() {
                     >
                       Sales Management
                     </Link>
-                    <Link
+                    {/* <Link
                       to="/admin/discounts"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       Discounts
-                    </Link>
+                    </Link> */}
                     <Link
                       to="/admin/invoices"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

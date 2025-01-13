@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Search, Truck } from 'lucide-react';
+import { Search, Package } from 'lucide-react';
 import { LoadingSpinner } from '../../../components/LoadingSpinner';
 import { toast } from 'react-hot-toast';
 import { orderApi } from '../../../services/orderApi';
 import { format } from 'date-fns';
-import { Order } from '../../../types/order';
 
 export function DeliveryManagement() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [highlightedProductId, setHighlightedProductId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -33,18 +33,18 @@ export function DeliveryManagement() {
   const handleUpdateStatus = async (orderId: number, newStatus: string) => {
     try {
       await orderApi.updateOrderStatus(orderId, newStatus);
-      toast.success('Order status updated successfully');
-      fetchOrders(); // Refresh the list
+      toast.success('Delivery status updated successfully');
+      fetchOrders();
     } catch (error) {
       console.error('Error updating order status:', error);
-      toast.error('Failed to update order status');
+      toast.error('Failed to update delivery status');
     }
   };
 
   const filteredOrders = orders.filter(order => 
-    order.user?.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    order.user?.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    order.id.toString().includes(searchQuery)
+    order.id.toString().includes(searchQuery) ||
+    order.user?.id.toString().includes(searchQuery) ||
+    order.items.some((item: any) => item.product.id.toString().includes(searchQuery))
   );
 
   if (isLoading) return <LoadingSpinner />;
@@ -54,12 +54,11 @@ export function DeliveryManagement() {
     <div>
       <h1 className="text-2xl font-bold mb-6">Delivery Management</h1>
 
-      {/* Search */}
       <div className="flex justify-between mb-6">
         <div className="relative w-96">
           <input
             type="text"
-            placeholder="Search by customer name or order ID..."
+            placeholder="Search by Delivery ID, Customer ID, or Product ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border rounded-lg"
@@ -68,22 +67,24 @@ export function DeliveryManagement() {
         </div>
       </div>
 
-      {/* Orders Table */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Order ID
+                Delivery ID
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Customer
+                Customer ID
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Date
+                Products
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Shipping Address
+                Total Price
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Delivery Address
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Status
@@ -95,7 +96,12 @@ export function DeliveryManagement() {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {filteredOrders.map((order) => (
-              <tr key={order.id}>
+              <tr 
+                key={order.id}
+                className={order.items.some((item: any) => item.product.id === highlightedProductId) 
+                  ? 'bg-yellow-50' 
+                  : ''}
+              >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
                     #{order.id}
@@ -103,13 +109,21 @@ export function DeliveryManagement() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    {order.user?.firstName} {order.user?.lastName}
+                    Customer #{order.user?.id}
                   </div>
-                  <div className="text-sm text-gray-500">{order.shippingEmail}</div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="text-sm text-gray-900">
+                    {order.items.map((item: any) => (
+                      <div key={item.id} className="mb-1">
+                        Product #{item.product.id} - Qty: {item.quantity}
+                      </div>
+                    ))}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    {format(new Date(order.orderDate), 'MMM dd, yyyy')}
+                    ${order.totalAmount}
                   </div>
                 </td>
                 <td className="px-6 py-4">

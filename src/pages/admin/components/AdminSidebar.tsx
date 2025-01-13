@@ -73,12 +73,12 @@ export function AdminSidebar() {
           label="Categories" 
           active={isActive('/admin/categories')}
         />
-        <SidebarLink 
+        {/* <SidebarLink 
           to="/admin/stock"
           icon={<Package />} 
           label="Stock" 
           active={isActive('/admin/stock')}
-        />
+        /> */}
         <SidebarLink 
           to="/admin/delivery"
           icon={<Truck />} 

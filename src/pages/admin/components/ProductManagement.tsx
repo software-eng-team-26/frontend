@@ -136,7 +136,7 @@ export function ProductManagement() {
                       className="h-10 w-10 rounded-lg object-cover"
                     />
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                      <div className="text-sm font-medium text-gray-900">{product.title}</div>
                       <div className="text-sm text-gray-500">{product.brand}</div>
                     </div>
                   </div>
@@ -148,9 +148,37 @@ export function ProductManagement() {
                   <span className="text-sm text-gray-900">${product.price}</span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`text-sm ${
-                    product.inventory <= 10 ? 'text-red-600 font-medium' : 'text-gray-900'
-                  }`}>{product.inventory}</span>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="number"
+                      min="0"
+                      value={product.inventory}
+                      onChange={async (e) => {
+                        const newValue = parseInt(e.target.value) || 0;
+                        if (product.id) {
+                          try {
+                            await updateProduct(product.id, {
+                              ...product,
+                              inventory: newValue
+                            });
+                            await fetchProducts();
+                            window.location.reload();
+                          } catch (error) {
+                            if (error.response?.status === 500 && 
+                                error.response?.data?.includes('JWT expired')) {
+                              await fetchProducts();
+                              window.location.reload();
+                            } else {
+                              console.error('Error updating stock:', error);
+                            }
+                          }
+                        }
+                      }}
+                      className={`w-20 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                        product.inventory <= 10 ? 'text-red-600 font-medium' : 'text-gray-900'
+                      }`}
+                    />
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-sm text-gray-900">{product.instructorName}</div>
@@ -187,8 +215,21 @@ export function ProductManagement() {
       >
         <ProductForm
           onSubmit={async (data) => {
-            await addProduct(data);
-            setShowAddModal(false);
+            try {
+              await addProduct(data);
+              await fetchProducts();
+              setShowAddModal(false);
+              window.location.reload();
+            } catch (error) {
+              if (error.response?.status === 500 && 
+                  error.response?.data?.includes('JWT expired')) {
+                await fetchProducts();
+                setShowAddModal(false);
+                window.location.reload();
+              } else {
+                console.error('Error adding product:', error);
+              }
+            }
           }}
           onCancel={() => setShowAddModal(false)}
         />
@@ -206,9 +247,23 @@ export function ProductManagement() {
           product={selectedProduct}
           onSubmit={async (data) => {
             if (selectedProduct?.id) {
-              await updateProduct(selectedProduct.id, data);
-              setShowEditModal(false);
-              clearSelectedProduct();
+              try {
+                await updateProduct(selectedProduct.id, data);
+                await fetchProducts();
+                setShowEditModal(false);
+                clearSelectedProduct();
+                window.location.reload();
+              } catch (error) {
+                if (error.response?.status === 500 && 
+                    error.response?.data?.includes('JWT expired')) {
+                  await fetchProducts();
+                  setShowEditModal(false);
+                  clearSelectedProduct();
+                  window.location.reload();
+                } else {
+                  console.error('Error updating product:', error);
+                }
+              }
             }
           }}
           onCancel={() => {

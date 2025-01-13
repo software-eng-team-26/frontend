@@ -2,7 +2,13 @@ import { useEffect, useState } from 'react';
 import { Search, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import { useCommentManagementStore } from '../../../store/admin/useCommentManagementStore';
 import { LoadingSpinner } from '../../../components/LoadingSpinner';
-import { getCommentStatus } from '../../../services/admin/commentManagementApi';
+
+const getCommentStatus = (approved: any) => {
+  // Check if approved is 1, true, '0x01', or any truthy binary value
+  return approved === 1 || approved === true || approved === '0x01' || approved > 0 
+    ? 'approved' 
+    : 'pending';
+};
 
 export function CommentManagement() {
   const { 
@@ -21,16 +27,18 @@ export function CommentManagement() {
     fetchComments();
   }, []);
 
-  const filteredComments = comments.filter(comment => {
-    const matchesSearch = 
-      (comment.content?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (comment.productName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (comment.userName?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+  const filteredComments = comments
+    .filter(comment => comment.content)
+    .filter(comment => {
+      const matchesSearch = 
+        (comment.content?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (comment.productName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (comment.userName?.toLowerCase() || '').includes(searchQuery.toLowerCase());
 
-    const status = getCommentStatus(comment.approved);
-    if (filter === 'all') return matchesSearch;
-    return matchesSearch && status === filter;
-  });
+      const status = getCommentStatus(comment.approved);
+      if (filter === 'all') return matchesSearch;
+      return matchesSearch && status === filter;
+    });
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -43,15 +51,30 @@ export function CommentManagement() {
     }
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (window.confirm('Are you sure you want to delete this comment? This action cannot be undone.')) {
-      deleteComment(id);
+      try {
+        await deleteComment(id);
+        const updatedComments = comments.filter(comment => comment.id !== id);
+        useCommentManagementStore.setState({ comments: updatedComments });
+      } catch (error) {
+        console.error('Error deleting comment:', error);
+      }
     }
   };
 
   const handleApprove = async (id: number) => {
-    await approveComment(id);
-    await fetchComments();
+    try {
+      await approveComment(id);
+      const updatedComments = comments.map(comment => 
+        comment.id === id 
+          ? { ...comment, approved: true }
+          : comment
+      );
+      useCommentManagementStore.setState({ comments: updatedComments });
+    } catch (error) {
+      console.error('Error approving comment:', error);
+    }
   };
 
   if (isLoading) return <LoadingSpinner />;
@@ -97,9 +120,6 @@ export function CommentManagement() {
                 Product
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Type
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Content
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -116,10 +136,9 @@ export function CommentManagement() {
           <tbody className="divide-y divide-gray-200">
             {filteredComments.map((comment) => {
               const status = getCommentStatus(comment.approved);
-              const isRatingOnly = !comment.content;
               
               return (
-                <tr key={comment.id} className={isRatingOnly ? 'bg-gray-50' : ''}>
+                <tr key={comment.id}>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-900">{comment.userName}</div>
                   </td>
@@ -127,16 +146,7 @@ export function CommentManagement() {
                     <div className="text-sm text-gray-900">{comment.productName}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                      ${isRatingOnly ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}
-                    >
-                      {isRatingOnly ? 'Rating' : 'Review'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">
-                      {isRatingOnly ? '-' : comment.content}
-                    </div>
+                    <div className="text-sm text-gray-900">{comment.content}</div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-900">
@@ -152,7 +162,7 @@ export function CommentManagement() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {!isRatingOnly && status === 'pending' && (
+                    {status === 'pending' ? (
                       <div className="flex justify-end space-x-2">
                         <button
                           onClick={() => handleApprove(comment.id)}
@@ -171,8 +181,7 @@ export function CommentManagement() {
                           <span className="ml-1 text-xs">Delete</span>
                         </button>
                       </div>
-                    )}
-                    {!isRatingOnly && status === 'approved' && (
+                    ) : (
                       <button
                         onClick={() => handleDelete(comment.id)}
                         className="text-red-600 hover:text-red-900 flex items-center"

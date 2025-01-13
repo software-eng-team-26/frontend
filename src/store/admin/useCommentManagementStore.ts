@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { commentManagementApi, Comment } from '../../services/admin/commentManagementApi';
 import { toast } from 'react-hot-toast';
+import axios from 'axios';
 
 interface CommentManagementState {
   comments: Comment[];
@@ -43,15 +44,18 @@ export const useCommentManagementStore = create<CommentManagementState>((set, ge
     }
   },
 
-  deleteComment: async (id) => {
+  deleteComment: async (id: number) => {
     try {
       set({ isLoading: true, error: null });
-      await commentManagementApi.deleteComment(id);
-      await get().fetchComments();
-      toast.success('Comment deleted successfully');
+      const response = await axios.delete(`/api/v1/comments/${id}`);
+      if (response.status === 200) {
+        toast.success('Comment deleted successfully');
+        await get().fetchComments();
+      }
     } catch (error: any) {
-      set({ error: error.message || 'Failed to delete comment' });
+      console.error('Error deleting comment:', error);
       toast.error('Failed to delete comment');
+      throw error;
     } finally {
       set({ isLoading: false });
     }
