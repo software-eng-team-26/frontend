@@ -52,7 +52,11 @@ export function CoursePage() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [newRating, setNewRating] = useState(5);
-  const { currentUser } = useUserStore();
+  const { user } = useUserStore();
+
+  // Add these debug logs
+  console.log('User store state:', useUserStore.getState());
+  console.log('Current user:', user);
 
   useEffect(() => {
     if (courseId) {
@@ -95,7 +99,8 @@ export function CoursePage() {
   };
 
   const handleAddRating = async (rating: number) => {
-    if (!currentUser) {
+    console.log('Current user state:', user);
+    if (!user) {
       toast.error('Please sign in to rate this course');
       return;
     }
@@ -141,7 +146,7 @@ export function CoursePage() {
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!currentUser) {
+    if (!user) {
       toast.error('Please sign in to leave a comment');
       return;
     }
@@ -154,7 +159,7 @@ export function CoursePage() {
     try {
       const commentData = {
         productId: Number(courseId),
-        userId: Number(currentUser.id),
+        userId: Number(user.id),
         content: newComment.trim(),
         rating: newRating > 0 ? newRating : null
       };
@@ -211,7 +216,7 @@ export function CoursePage() {
       ) : (
         <div className="text-center py-8">
           <p className="text-gray-500 mb-4">No reviews yet. Be the first to review!</p>
-          {!currentUser && (
+          {!user && (
             <p className="text-sm text-gray-400">
               Please sign in to leave a review
             </p>

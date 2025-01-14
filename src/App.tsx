@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { HomePage } from './pages/HomePage';
@@ -40,6 +41,7 @@ import { DeliveryManagement } from './pages/admin/components/DeliveryManagement'
 import { CommentManagement } from './pages/admin/components/CommentManagement';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { CategoryManagement } from './pages/admin/components/CategoryManagement';
+import { RequireAdmin } from './utils/requireAdmin';
 
 function App() {
   const { user } = useUserStore();
@@ -97,91 +99,19 @@ function App() {
           <Route path="/order/:orderId" element={<OrderDetailsPage />} />
           <Route path="/order/:orderId/invoice" element={<InvoicePage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute allowedRoles={['ADMIN', 'SALES_MANAGER', 'PRODUCT_MANAGER']}>
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={
-              <ProtectedRoute allowedRoles={['ADMIN', 'SALES_MANAGER', 'PRODUCT_MANAGER']}>
-                <DashboardOverview />
-              </ProtectedRoute>
-            } />
-            <Route 
-              path="sales" 
-              element={
-                <ProtectedRoute allowedRoles={['SALES_MANAGER', 'ADMIN']}>
-                  <SalesManagement />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="discounts" 
-              element={
-                <ProtectedRoute allowedRoles={['SALES_MANAGER', 'ADMIN']}>
-                  <DiscountManagement />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="invoices" 
-              element={
-                <ProtectedRoute allowedRoles={['SALES_MANAGER', 'ADMIN']}>
-                  <InvoiceManagement />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="products" 
-              element={
-                <ProtectedRoute allowedRoles={['PRODUCT_MANAGER', 'ADMIN']}>
-                  <ProductManagement />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="categories" 
-              element={
-                <ProtectedRoute allowedRoles={['PRODUCT_MANAGER', 'ADMIN']}>
-                  <CategoryManagement />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="stock" 
-              element={
-                <ProtectedRoute allowedRoles={['PRODUCT_MANAGER', 'ADMIN']}>
-                  <StockManagement />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="analytics" 
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <Analytics />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="delivery" 
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <DeliveryManagement />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="comments" 
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <CommentManagement />
-                </ProtectedRoute>
-              } 
-            />
+          <Route path="/admin" element={<RequireAdmin />}>
+            <Route path="" element={<AdminLayout />}>
+              <Route index element={<DashboardOverview />} />
+              <Route path="sales" element={<SalesManagement />} />
+              <Route path="discounts" element={<DiscountManagement />} />
+              <Route path="invoices" element={<InvoiceManagement />} />
+              <Route path="products" element={<ProductManagement />} />
+              <Route path="categories" element={<CategoryManagement />} />
+              <Route path="stock" element={<StockManagement />} />
+              <Route path="analytics" element={<Analytics />} />
+              <Route path="delivery" element={<DeliveryManagement />} />
+              <Route path="comments" element={<CommentManagement />} />
+            </Route>
           </Route>
         </Routes>
       </div>

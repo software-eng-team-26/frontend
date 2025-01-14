@@ -54,7 +54,7 @@ export const useProductManagementStore = create<ProductManagementState>((set, ge
         toast.error('Your session has expired. Please sign in again.');
       } else {
         set({ error: error.message || 'Failed to add product' });
-        toast.error('Failed to add product');
+        // toast.error('Failed to add product');
       }
     } finally {
       set({ isLoading: false });

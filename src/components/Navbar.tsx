@@ -161,13 +161,13 @@ export function Navbar() {
                   <CartIcon />
                 </Link>
                 <div className="relative group">
-                  <Link
+                  {/* <Link
                     to="/admin"
                     className="text-gray-600 hover:text-indigo-600 transition-colors flex items-center space-x-1"
                   >
                     <span>Admin</span>
                     <ChevronDown className="w-4 h-4" />
-                  </Link>
+                  </Link> */}
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block">
                     <Link
                       to="/admin/sales"

@@ -23,6 +23,10 @@ export interface OrderItem {
   quantity: number;
   price: number;
   refundStatus: RefundStatus;
+  product?: {
+    id: number;
+    originalPrice?: number;
+  };
 }
 
 export interface Order {

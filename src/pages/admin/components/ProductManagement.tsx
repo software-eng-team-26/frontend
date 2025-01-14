@@ -154,8 +154,8 @@ export function ProductManagement() {
                       min="0"
                       value={product.inventory}
                       onChange={async (e) => {
-                        const newValue = parseInt(e.target.value) || 0;
-                        if (product.id) {
+                        const newValue = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                        if (!isNaN(newValue) && product.id) {
                           try {
                             await updateProduct(product.id, {
                               ...product,

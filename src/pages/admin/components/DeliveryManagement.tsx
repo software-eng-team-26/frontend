@@ -145,11 +145,11 @@ export function DeliveryManagement() {
                     onChange={(e) => handleUpdateStatus(order.id, e.target.value)}
                     className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                   >
-                    <option value="PENDING">Pending</option>
+                    <option value="PROVISIONING">Provisioning</option>
                     <option value="PROCESSING">Processing</option>
-                    <option value="SHIPPED">Shipped</option>
+                    {/* <option value="SHIPPED">Shipped</option> */}
                     <option value="DELIVERED">Delivered</option>
-                    <option value="CANCELLED">Cancelled</option>
+                    {/* <option value="CANCELLED">Cancelled</option> */}
                   </select>
                 </td>
               </tr>

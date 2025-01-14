@@ -21,6 +21,12 @@ export function ProfilePage() {
     fetchOrders();
   }, [user, navigate]);
 
+  useEffect(() => {
+    if (user) {
+      fetchOrders();
+    }
+  }, []);
+
   const fetchOrders = async () => {
     try {
       const response = await orderApi.getUserOrders();
@@ -158,13 +164,15 @@ export function ProfilePage() {
                   <p className="text-sm text-gray-500">
                     {new Date(order.orderDate).toLocaleDateString()}
                   </p>
+                  <p className="text-sm text-gray-500">
+                    Delivery Address: {order.shippingAddress}
+                  </p>
                 </div>
                 <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                   {order.orderStatus}
                 </span>
               </div>
 
-              {/* Only render OrderStatusTracker if orderStatus exists */}
               {order.orderStatus && (
                 <OrderStatusTracker status={order.orderStatus} />
               )}
@@ -185,7 +193,7 @@ export function ProfilePage() {
                           order.orderStatus === OrderStatus.PROVISIONING) && 
                           item.refundStatus !== RefundStatus.APPROVED && (
                           <a 
-                            href={`/courses/${item.product?.id}`}
+                            href={`/course/${item.product?.id}`}
                             className="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-800"
                           >
                             Go to Course <ExternalLink className="h-4 w-4 ml-1" />

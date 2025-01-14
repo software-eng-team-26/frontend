@@ -10,10 +10,15 @@ import {
   BarChart,
   FolderTree
 } from 'lucide-react';
+import { useUserStore } from '../../../store/useUserStore';
 
 export function AdminSidebar() {
   const location = useLocation();
+  const { user } = useUserStore();
   const isActive = (path: string) => location.pathname === path;
+
+  const isSalesManager = user?.email === 'sales@demo.com';
+  const isProductManager = user?.email === 'product@demo.com';
 
   return (
     <div className="w-64 min-h-[calc(100vh-4rem)] bg-white shadow-sm">
@@ -29,62 +34,53 @@ export function AdminSidebar() {
         />
         
         {/* Sales Manager Section */}
-        <div className="px-4 py-2 mt-6">
-          <h3 className="text-sm font-semibold text-gray-500">SALES MANAGEMENT</h3>
-        </div>
-        <SidebarLink 
-          to="/admin/sales"
-          icon={<DollarSign />} 
-          label="Sales" 
-          active={isActive('/admin/sales')}
-        />
-        {/* <SidebarLink 
-          to="/admin/discounts"
-          icon={<Tag />} 
-          label="Discounts" 
-          active={isActive('/admin/discounts')}
-        /> */}
-        <SidebarLink 
-          to="/admin/invoices"
-          icon={<FileText />} 
-          label="Invoices" 
-          active={isActive('/admin/invoices')}
-        />
-        {/* <SidebarLink 
-          to="/admin/analytics"
-          icon={<BarChart />} 
-          label="Analytics" 
-          active={isActive('/admin/analytics')}
-        /> */}
+        {isSalesManager && (
+          <>
+            <div className="px-4 py-2 mt-6">
+              <h3 className="text-sm font-semibold text-gray-500">SALES MANAGEMENT</h3>
+            </div>
+            <SidebarLink 
+              to="/admin/sales"
+              icon={<DollarSign />} 
+              label="Sales" 
+              active={isActive('/admin/sales')}
+            />
+            <SidebarLink 
+              to="/admin/invoices"
+              icon={<FileText />} 
+              label="Invoices" 
+              active={isActive('/admin/invoices')}
+            />
+          </>
+        )}
 
         {/* Product Manager Section */}
-        <div className="px-4 py-2 mt-6">
-          <h3 className="text-sm font-semibold text-gray-500">PRODUCT MANAGEMENT</h3>
-        </div>
-        <SidebarLink 
-          to="/admin/products"
-          icon={<Package />} 
-          label="Products" 
-          active={isActive('/admin/products')}
-        />
-        <SidebarLink 
-          to="/admin/categories"
-          icon={<FolderTree />} 
-          label="Categories" 
-          active={isActive('/admin/categories')}
-        />
-        {/* <SidebarLink 
-          to="/admin/stock"
-          icon={<Package />} 
-          label="Stock" 
-          active={isActive('/admin/stock')}
-        /> */}
-        <SidebarLink 
-          to="/admin/delivery"
-          icon={<Truck />} 
-          label="Delivery" 
-          active={isActive('/admin/delivery')}
-        />
+        {isProductManager && (
+          <>
+            <div className="px-4 py-2 mt-6">
+              <h3 className="text-sm font-semibold text-gray-500">PRODUCT MANAGEMENT</h3>
+            </div>
+            <SidebarLink 
+              to="/admin/products"
+              icon={<Package />} 
+              label="Products" 
+              active={isActive('/admin/products')}
+            />
+            <SidebarLink 
+              to="/admin/categories"
+              icon={<FolderTree />} 
+              label="Categories" 
+              active={isActive('/admin/categories')}
+            />
+            <SidebarLink 
+              to="/admin/delivery"
+              icon={<Truck />} 
+              label="Delivery" 
+              active={isActive('/admin/delivery')}
+            />
+          </>
+        )}
+
         <SidebarLink 
           to="/admin/comments"
           icon={<MessageSquare />} 
