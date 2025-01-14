@@ -6,6 +6,7 @@ import { useProductManagementStore } from '../../../store/admin/useProductManage
 import { LoadingSpinner } from '../../../components/LoadingSpinner';
 import { toast } from 'react-hot-toast';
 import { discountApi } from '../../../services/admin/discountApi';
+import { RefundManagement } from './RefundManagement';
 
 interface DiscountForm {
   productId: number;
@@ -23,7 +24,9 @@ export function SalesManagement() {
     setSelectedProduct,
     clearSelectedProduct,
     addProduct,
-    updateProduct
+    updateProduct,
+    updateProductStock,
+    updateProductPrice
   } = useProductManagementStore();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,6 +34,11 @@ export function SalesManagement() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPrice, setEditingPrice] = useState<{[key: number]: string}>({});
   const [editingDiscount, setEditingDiscount] = useState<{[key: number]: string}>({});
+  const [activeTab, setActiveTab] = useState<'sales' | 'refunds'>('sales');
+
+  useEffect(() => {
+    console.log('Active tab:', activeTab);
+  }, [activeTab]);
 
   useEffect(() => {
     fetchProducts();
@@ -59,10 +67,8 @@ export function SalesManagement() {
         return;
       }
 
-      const product = products.find(p => p.id === productId);
-      if (!product) return;
-
-      await updateProduct(productId, { ...product, price });
+      await updateProductPrice(productId, price);
+      
       setEditingPrice(prev => {
         const newState = { ...prev };
         delete newState[productId];
@@ -142,243 +148,276 @@ export function SalesManagement() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Sales Management</h1>
-
-      {/* Search and Add Product */}
-      <div className="flex justify-between mb-6">
-        <div className="relative w-96">
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg"
-          />
-          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+      <div className="mb-6">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => {
+                console.log('Switching to sales tab');
+                setActiveTab('sales');
+              }}
+              className={`${
+                activeTab === 'sales'
+                  ? 'border-indigo-500 text-indigo-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              Sales
+            </button>
+            <button
+              onClick={() => {
+                console.log('Switching to refunds tab');
+                setActiveTab('refunds');
+              }}
+              className={`${
+                activeTab === 'refunds'
+                  ? 'border-indigo-500 text-indigo-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              Refunds
+            </button>
+          </nav>
         </div>
-
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Add Product
-        </button>
       </div>
 
-      {/* Products Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Product
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Category
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Price
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Stock
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Instructor
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Discount
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {filteredProducts.map((product) => (
-              <tr key={product.id}>
-                <td className="px-6 py-4">
-                  <div className="flex items-center">
-                    <img 
-                      src={product.thumbnailUrl} 
-                      alt={product.name}
-                      className="h-10 w-10 rounded-lg object-cover"
-                    />
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">{product.title}</div>
-                      <div className="text-sm text-gray-500">{product.brand}</div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm text-gray-900">{product.category?.name}</span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm text-gray-900">${product.price}</span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`text-sm ${
-                    product.inventory <= 10 ? 'text-red-600 font-medium' : 'text-gray-900'
-                  }`}>{product.inventory}</span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900">{product.instructorName}</div>
-                  <div className="text-sm text-gray-500">{product.instructorRole}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {editingDiscount[product.id] !== undefined ? (
-                    <div className="flex items-center justify-end space-x-2">
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="100"
-                        value={editingDiscount[product.id]}
-                        onChange={(e) => setEditingDiscount(prev => ({
-                          ...prev,
-                          [product.id]: e.target.value
-                        }))}
-                        className="w-24 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="0-100%"
-                      />
-                      <span className="text-sm text-gray-500">%</span>
-                      <button
-                        onClick={() => handleDiscountUpdate(product.id, editingDiscount[product.id])}
-                        className="text-green-600 hover:text-green-900"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setEditingDiscount(prev => {
-                          const newState = { ...prev };
-                          delete newState[product.id];
-                          return newState;
-                        })}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-end">
-                      {product.isOnSale ? (
-                        <div className="flex items-center">
-                          <span className="text-sm text-green-600 mr-2">{product.discountRate}% off</span>
-                          <button
-                            onClick={() => setEditingDiscount(prev => ({
+      {activeTab === 'sales' ? (
+        <div>
+          <h1 className="text-2xl font-bold mb-6">Sales Management</h1>
+
+          <div className="mb-6">
+            <div className="relative w-96">
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border rounded-lg"
+              />
+              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Product
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Category
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Price
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Stock
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Instructor
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Discount
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredProducts.map((product) => (
+                  <tr key={product.id}>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        <img 
+                          src={product.thumbnailUrl} 
+                          alt={product.name}
+                          className="h-10 w-10 rounded-lg object-cover"
+                        />
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{product.title}</div>
+                          <div className="text-sm text-gray-500">{product.brand}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">{product.category?.name}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">${product.price}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`text-sm ${
+                        product.inventory <= 10 ? 'text-red-600 font-medium' : 'text-gray-900'
+                      }`}>
+                        {product.inventory}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">{product.instructorName}</div>
+                      <div className="text-sm text-gray-500">{product.instructorRole}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {editingDiscount[product.id] !== undefined ? (
+                        <div className="flex items-center justify-end space-x-2">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            value={editingDiscount[product.id]}
+                            onChange={(e) => setEditingDiscount(prev => ({
                               ...prev,
-                              [product.id]: product.discountRate?.toString() || '0'
+                              [product.id]: e.target.value
                             }))}
-                            className="text-blue-600 hover:text-blue-900 flex items-center"
+                            className="w-24 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="0-100%"
+                          />
+                          <span className="text-sm text-gray-500">%</span>
+                          <button
+                            onClick={() => handleDiscountUpdate(product.id, editingDiscount[product.id])}
+                            className="text-green-600 hover:text-green-900"
                           >
-                            <Percent className="w-4 h-4 mr-1" />
-                            Edit
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingDiscount(prev => {
+                              const newState = { ...prev };
+                              delete newState[product.id];
+                              return newState;
+                            })}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-end">
+                          {product.isOnSale ? (
+                            <div className="flex items-center">
+                              <span className="text-sm text-green-600 mr-2">{product.discountRate}% off</span>
+                              <button
+                                onClick={() => setEditingDiscount(prev => ({
+                                  ...prev,
+                                  [product.id]: product.discountRate?.toString() || '0'
+                                }))}
+                                className="text-blue-600 hover:text-blue-900 flex items-center"
+                              >
+                                <Percent className="w-4 h-4 mr-1" />
+                                Edit
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setEditingDiscount(prev => ({
+                                ...prev,
+                                [product.id]: '0'
+                              }))}
+                              className="text-blue-600 hover:text-blue-900 flex items-center"
+                            >
+                              <Percent className="w-4 h-4 mr-1" />
+                              Add Discount
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      {editingPrice[product.id] !== undefined ? (
+                        <div className="flex items-center justify-end space-x-2">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={editingPrice[product.id]}
+                            onChange={(e) => setEditingPrice(prev => ({
+                              ...prev,
+                              [product.id]: e.target.value
+                            }))}
+                            className="w-24 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="New price"
+                          />
+                          <button
+                            onClick={() => handlePriceUpdate(product.id, editingPrice[product.id])}
+                            className="text-green-600 hover:text-green-900"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingPrice(prev => {
+                              const newState = { ...prev };
+                              delete newState[product.id];
+                              return newState;
+                            })}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Cancel
                           </button>
                         </div>
                       ) : (
                         <button
-                          onClick={() => setEditingDiscount(prev => ({
+                          onClick={() => setEditingPrice(prev => ({
                             ...prev,
-                            [product.id]: '0'
+                            [product.id]: product.price.toString()
                           }))}
-                          className="text-blue-600 hover:text-blue-900 flex items-center"
+                          className="text-blue-600 hover:text-blue-900 flex items-center justify-end"
                         >
-                          <Percent className="w-4 h-4 mr-1" />
-                          Add Discount
+                          <DollarSign className="w-4 h-4 mr-1" />
+                          Edit Price
                         </button>
                       )}
-                    </div>
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  {editingPrice[product.id] !== undefined ? (
-                    <div className="flex items-center justify-end space-x-2">
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={editingPrice[product.id]}
-                        onChange={(e) => setEditingPrice(prev => ({
-                          ...prev,
-                          [product.id]: e.target.value
-                        }))}
-                        className="w-24 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="New price"
-                      />
-                      <button
-                        onClick={() => handlePriceUpdate(product.id, editingPrice[product.id])}
-                        className="text-green-600 hover:text-green-900"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setEditingPrice(prev => {
-                          const newState = { ...prev };
-                          delete newState[product.id];
-                          return newState;
-                        })}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setEditingPrice(prev => ({
-                        ...prev,
-                        [product.id]: product.price.toString()
-                      }))}
-                      className="text-blue-600 hover:text-blue-900 flex items-center justify-end"
-                    >
-                      <DollarSign className="w-4 h-4 mr-1" />
-                      Edit Price
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-      {/* Add/Edit Product Modals */}
-      <Modal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        title="Add New Product"
-      >
-        <ProductForm
-          onSubmit={async (data) => {
-            await addProduct(data);
-            setShowAddModal(false);
-          }}
-          onCancel={() => setShowAddModal(false)}
-        />
-      </Modal>
+          <Modal
+            isOpen={showAddModal}
+            onClose={() => setShowAddModal(false)}
+            title="Add New Product"
+          >
+            <ProductForm
+              onSubmit={async (data) => {
+                await addProduct(data);
+                setShowAddModal(false);
+              }}
+              onCancel={() => setShowAddModal(false)}
+            />
+          </Modal>
 
-      <Modal
-        isOpen={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          clearSelectedProduct();
-        }}
-        title="Edit Product"
-      >
-        <ProductForm
-          product={selectedProduct}
-          onSubmit={async (data) => {
-            if (selectedProduct?.id) {
-              await updateProduct(selectedProduct.id, data);
+          <Modal
+            isOpen={showEditModal}
+            onClose={() => {
               setShowEditModal(false);
               clearSelectedProduct();
-            }
-          }}
-          onCancel={() => {
-            setShowEditModal(false);
-            clearSelectedProduct();
-          }}
-        />
-      </Modal>
+            }}
+            title="Edit Product"
+          >
+            <ProductForm
+              product={selectedProduct}
+              onSubmit={async (data) => {
+                if (selectedProduct?.id) {
+                  await updateProduct(selectedProduct.id, data);
+                  setShowEditModal(false);
+                  clearSelectedProduct();
+                }
+              }}
+              onCancel={() => {
+                setShowEditModal(false);
+                clearSelectedProduct();
+              }}
+            />
+          </Modal>
+        </div>
+      ) : (
+        <div>
+          <h1>Refund Management</h1>
+          <RefundManagement />
+        </div>
+      )}
     </div>
   );
 } 

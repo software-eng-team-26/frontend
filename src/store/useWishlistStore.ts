@@ -3,7 +3,7 @@ import { ProductDto } from '../services/productApi';
 import { addToWishlist, removeFromWishlist, getWishlist } from '../services/wishlistApi';
 
 interface WishlistState {
-  items: ProductDto[];
+  items: any[];
   isLoading: boolean;
   error: string | null;
   addItem: (userId: number, productId: number) => Promise<void>;

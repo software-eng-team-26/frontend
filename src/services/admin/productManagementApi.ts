@@ -55,18 +55,13 @@ export const productManagementApi = {
     return response.data;
   },
 
-  async updateProduct(productId: number, product: ProductFormData) {
-    const transformedData = {
-      ...product,
-      id: productId,
-      category: {
-        name: product.category.name
-      }
-    };
-
+  async updateProduct(productId: number, updates: Partial<ProductFormData>) {
+    // For inventory updates, only send the inventory field
     const response = await axios.put(
       `${API_URL}/product/${productId}/update`,
-      transformedData,
+      {
+        inventory: updates.inventory
+      },
       getAuthHeader()
     );
     return response.data;
@@ -94,5 +89,23 @@ export const productManagementApi = {
       getAuthHeader()
     );
     return response.data;
-  }
+  },
+
+  async updateProductStock(productId: number, inventory: number) {
+    const response = await axios.put(
+      `${API_URL}/product/${productId}/stock`,
+      { inventory },
+      getAuthHeader()
+    );
+    return response.data;
+  },
+
+  async updateProductPrice(productId: number, price: number) {
+    const response = await axios.put(
+      `${API_URL}/product/${productId}/price`,
+      { price },
+      getAuthHeader()
+    );
+    return response.data;
+  },
 }; 

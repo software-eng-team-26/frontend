@@ -77,12 +77,12 @@ export function AdminDashboard() {
               active={activeTab === 'sales'} 
               onClick={() => setActiveTab('sales')} 
             />
-            <SidebarLink 
+            {/* <SidebarLink 
               icon={<Tag />} 
               label="Discounts" 
               active={activeTab === 'discounts'} 
               onClick={() => setActiveTab('discounts')} 
-            />
+            /> */}
             <SidebarLink 
               icon={<FileText />} 
               label="Invoices" 

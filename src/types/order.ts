@@ -1,9 +1,28 @@
 export enum OrderStatus {
   PENDING = 'PENDING',
   PROCESSING = 'PROCESSING',
-  SHIPPED = 'SHIPPED',
+  PROVISIONING = 'PROVISIONING',
   DELIVERED = 'DELIVERED',
   CANCELLED = 'CANCELLED'
+}
+
+export enum RefundStatus {
+  NONE = 'NONE',
+  REQUESTED = 'REQUESTED',
+  APPROVED = 'APPROVED',
+  PENDING_RETURN = 'PENDING_RETURN',
+  COMPLETED = 'COMPLETED',
+  REJECTED = 'REJECTED'
+}
+
+export interface OrderItem {
+  id: number;
+  orderId: number;
+  productId: number;
+  productName: string;
+  quantity: number;
+  price: number;
+  refundStatus: RefundStatus;
 }
 
 export interface Order {
@@ -11,11 +30,12 @@ export interface Order {
   userId: number;
   userName: string;
   orderDate: string;
-  status: OrderStatus;
+  orderStatus: OrderStatus;
   totalAmount: number;
   shippingAddress: string;
   shippingEmail: string | null;
   shippingPhone: string | null;
+  items: OrderItem[];
 }
 
 export interface ShippingDetails {

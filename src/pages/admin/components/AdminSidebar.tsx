@@ -38,24 +38,24 @@ export function AdminSidebar() {
           label="Sales" 
           active={isActive('/admin/sales')}
         />
-        <SidebarLink 
+        {/* <SidebarLink 
           to="/admin/discounts"
           icon={<Tag />} 
           label="Discounts" 
           active={isActive('/admin/discounts')}
-        />
+        /> */}
         <SidebarLink 
           to="/admin/invoices"
           icon={<FileText />} 
           label="Invoices" 
           active={isActive('/admin/invoices')}
         />
-        <SidebarLink 
+        {/* <SidebarLink 
           to="/admin/analytics"
           icon={<BarChart />} 
           label="Analytics" 
           active={isActive('/admin/analytics')}
-        />
+        /> */}
 
         {/* Product Manager Section */}
         <div className="px-4 py-2 mt-6">

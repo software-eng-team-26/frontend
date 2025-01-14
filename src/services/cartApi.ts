@@ -47,11 +47,19 @@ export const cartApi = {
     }
   },
 
-  async removeItemFromCart(cartId: number, productId: number) {
-    if (!cartId) {
-      throw new Error('Cart ID is required');
+  async removeItemFromCart(productId: number) {
+    try {
+      const currentCart = await this.getCurrentCart();
+      if (!currentCart.data?.data?.id) {
+        throw new Error('No active cart found');
+      }
+      const cartId = currentCart.data.data.id;
+      
+      return api.delete(`/carts/${cartId}/items/${productId}`);
+    } catch (error) {
+      console.error('Error in removeItemFromCart:', error);
+      throw error;
     }
-    return api.delete(`/carts/${cartId}/items/${productId}`);
   },
 
   async clearCart() {

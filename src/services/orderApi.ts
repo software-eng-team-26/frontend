@@ -1,6 +1,6 @@
 import { api } from './api';
 import { ApiResponse } from '../types/api';
-import { ShippingDetails, Order } from '../types/order';
+import { ShippingDetails, Order, OrderItem } from '../types/order';
 import { useAuthStore } from '../store/useAuthStore';
 
 interface OrderResponse {
@@ -45,12 +45,36 @@ export const orderApi = {
     });
   },
 
-  updateOrderStatus: (orderId: number, status: string) => {
+  updateOrderStatus: (orderId: number, status: OrderStatus) => {
+    return api.post(`/orders/${orderId}/update-status?status=${status}`);
+  },
+
+  getRefundRequests: () => {
     const token = useAuthStore.getState().getToken();
-    return api.post<ApiResponse<Order>>(`/orders/${orderId}/update-status?status=${status}`, null, {
+    return api.get<ApiResponse<OrderItem[]>>('/orders/refund-requests', {
       headers: {
         'Authorization': `Bearer ${token}`
       }
+    });
+  },
+
+  approveRefund: (orderId: number, itemId: number, approved: boolean) => {
+    const token = useAuthStore.getState().getToken();
+    return api.post<ApiResponse<OrderItem>>(
+      `/orders/${orderId}/items/${itemId}/refund/approve`, 
+      null,
+      {
+        params: { approved },
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+  },
+
+  requestRefund: async (orderId: number, itemId: number, reason: string) => {
+    return await api.post(`/orders/${orderId}/items/${itemId}/refund`, {
+      reason: reason
     });
   }
 }; 

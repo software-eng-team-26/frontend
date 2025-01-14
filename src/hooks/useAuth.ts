@@ -1,22 +1,45 @@
-import { useUserStore } from '../store/useUserStore';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
-import { UserRole } from '../types/user';
+import { useUserStore } from '../store/useUserStore';
+import { toast } from 'react-hot-toast';
 
 export function useAuth() {
-  const { user } = useUserStore();
-  const { getToken } = useAuthStore();
+  const { token, clearToken } = useAuthStore();
+  const { user, setUser } = useUserStore();
+  const [isAuthenticated, setIsAuthenticated] = useState(!!token);
 
-  const isAuthenticated = !!getToken();
-  const hasRole = (role: UserRole) => user?.role === role;
-  const hasAnyRole = (roles: UserRole[]) => user ? roles.includes(user.role) : false;
+  useEffect(() => {
+    const checkTokenExpiration = () => {
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const expirationTime = payload.exp * 1000; // Convert to milliseconds
+          
+          if (Date.now() >= expirationTime) {
+            clearToken();
+            setUser(null);
+            setIsAuthenticated(false);
+            toast.error('Your session has expired. Please sign in again.');
+            return;
+          }
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error('Error parsing token:', error);
+          clearToken();
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      } else {
+        setIsAuthenticated(false);
+      }
+    };
 
-  return {
-    user,
-    isAuthenticated,
-    hasRole,
-    hasAnyRole,
-    isSalesManager: hasRole('SALES_MANAGER'),
-    isProductManager: hasRole('PRODUCT_MANAGER'),
-    isAdmin: hasRole('ADMIN'),
-  };
+    checkTokenExpiration();
+    // Check token expiration every minute
+    const interval = setInterval(checkTokenExpiration, 60000);
+
+    return () => clearInterval(interval);
+  }, [token, clearToken, setUser]);
+
+  return { isAuthenticated };
 } 

@@ -22,7 +22,7 @@ export function Navbar() {
   const isActive = (path: string) => location.pathname.startsWith(path);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { items: wishlistItems } = useWishlistStore();
+  const { items: wishlistItems = [] } = useWishlistStore();
   const { isAuthenticated } = useAuth();
 
   const showAdminLink = isAuthenticated;
@@ -151,7 +151,7 @@ export function Navbar() {
                   className="relative p-2 text-gray-600 hover:text-indigo-600 transition-colors"
                 >
                   <Heart className="w-6 h-6" />
-                  {wishlistItems.length > 0 && (
+                  {wishlistItems?.length > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                       {wishlistItems.length}
                     </span>
@@ -204,7 +204,7 @@ export function Navbar() {
                   className="relative p-2 text-gray-600 hover:text-indigo-600 transition-colors"
                 >
                   <Heart className="w-6 h-6" />
-                  {wishlistItems.length > 0 && (
+                  {wishlistItems?.length > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                       {wishlistItems.length}
                     </span>

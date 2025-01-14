@@ -90,7 +90,7 @@ export const useCartStore = create<CartState>()(
               isLoading: false,
               error: null
             });
-            toast.success('Cart transferred successfully');
+            // toast.success('Cart transferred successfully');
           }
         } catch (error) {
           console.error('Error transferring cart:', error);
@@ -98,7 +98,7 @@ export const useCartStore = create<CartState>()(
             error: 'Failed to transfer cart',
             isLoading: false
           });
-          toast.error('Failed to transfer cart');
+          // toast.error('Failed to transfer cart');
         }
       },
 
