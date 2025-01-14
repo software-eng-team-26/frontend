@@ -71,16 +71,22 @@ VITE_API_URL=http://localhost:9191/api/v1
 ## Screenshots
 
 - **Home Page:**
-  ![alt text](image-1.png)
+  <img width="1661" alt="image" src="https://github.com/user-attachments/assets/e34db70e-770d-4a50-a892-76a9c9b3aabb" />
 
-- **Course Browsing:**
-  ![Course Browsing](docs/course-browsing.png)
+
+- **Course Details:**
+  <img width="1661" alt="image" src="https://github.com/user-attachments/assets/a391ed9f-8697-463a-9e36-5a475deb9528" />
+
 
 - **Cart Management:**
-  ![Cart Management](docs/cart-management.png)
+  <img width="1254" alt="image" src="https://github.com/user-attachments/assets/d108ea47-119c-4205-aee3-527af0f313f1" />
+
 
 - **Admin Dashboard:**
-  ![Admin Dashboard](docs/admin-dashboard.png)
+  <img width="1675" alt="image" src="https://github.com/user-attachments/assets/06708fbb-288d-4ce9-a183-3e24d55bb0e7" />
+  <img width="1680" alt="image" src="https://github.com/user-attachments/assets/0a3f8774-ee8e-44f1-9cc1-61fc93fb05f5" />
+
+
 
 ## Contributing
 
