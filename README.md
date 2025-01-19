@@ -1,4 +1,4 @@
-# 308-Frontend - EduMart Platform
+# Frontend - EduMart Platform
 
 ## Overview
 
@@ -87,6 +87,9 @@ VITE_API_URL=http://localhost:9191/api/v1
   <img width="1680" alt="image" src="https://github.com/user-attachments/assets/0a3f8774-ee8e-44f1-9cc1-61fc93fb05f5" />
 
 
+Here is the backend application a Spring Boot application designed to handle the server-side logic of an online learning platform. It provides RESTful APIs for managing courses, orders, users, and more.
+
+[Visit Backend](https://github.com/software-eng-team-26/backend)
 
 ## Contributing
 
